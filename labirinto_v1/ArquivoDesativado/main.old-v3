@@ -1,0 +1,239 @@
+// lib/main.dart
+
+// 1. Importação fundamental: Traz todas as ferramentas visuais (Widgets) do Flutter.
+import 'package:flutter/material.dart';
+
+// 2. Função principal: É aqui que o aplicativo começa a rodar.
+void main() {
+  // runApp "liga" o nosso aplicativo na tela do celular.
+  runApp(MeuJogoApp());
+}
+
+// 3. O Widget Raiz: Configurações gerais do app (sem estado mutável por enquanto).
+class MeuJogoApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner:
+          false, // Tira a faixa de "debug" do canto da tela
+      title: 'Corrida de Labirintos',
+      // Scaffold é a "estrutura" básica de uma tela (tela em branco)
+      home: TelaDoJogo(),
+    );
+  }
+}
+
+// Transformamos o StatelessWidget em StatefulWidget para o jogo ter "memória".
+class TelaDoJogo extends StatefulWidget {
+  @override
+  _TelaDoJogoState createState() => _TelaDoJogoState();
+}
+
+// O "State" guarda as informações que mudam durante o jogo.
+class _TelaDoJogoState extends State<TelaDoJogo> {
+  // 1. A Matriz de Memória (false = não visitado, true = já visitado)
+  late List<List<bool>> lugaresVisitados;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializamos a memória com 'false' do mesmo tamanho do mapa
+    lugaresVisitados = List.generate(
+      mapaDoLabirinto.length,
+      (i) => List.filled(mapaDoLabirinto[0].length, false),
+    );
+  }
+
+  // 2. O CÉREBRO DA IA: Função com Backtracking
+  // Usamos "Future<bool>" e "async" para poder dar pequenas pausas e vermos a IA pensando.
+  Future<bool> resolverLabirinto(int x, int y) async {
+    // CASO BASE: A IA achou a saída (3)?
+    if (mapaDoLabirinto[y][x] == 3) return true;
+
+    // Marca o bloco atual como visitado para não voltar aqui
+    lugaresVisitados[y][x] = true;
+
+    // Atualiza a posição do personagem na tela e dá uma pausa de meio segundo
+    setState(() {
+      posicaoPersonagemX = x;
+      posicaoPersonagemY = y;
+    });
+    await Future.delayed(
+      Duration(milliseconds: 300),
+    ); // A Mágica visual acontece aqui!
+
+    // Para onde a IA pode tentar ir? (Direita, Baixo, Esquerda, Cima)
+    List<List<int>> direcoes = [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1],
+    ];
+
+    for (var direcao in direcoes) {
+      int proximoX = x + direcao[0];
+      int proximoY = y + direcao[1];
+
+      // A IA verifica: Está dentro do mapa? Não é parede (1)? E eu ainda não visitei?
+      if (proximoY >= 0 &&
+          proximoY < mapaDoLabirinto.length &&
+          proximoX >= 0 &&
+          proximoX < mapaDoLabirinto[0].length &&
+          mapaDoLabirinto[proximoY][proximoX] != 1 &&
+          lugaresVisitados[proximoY][proximoX] == false) {
+        // A IA dá um passo a frente (chamada recursiva)
+        bool encontrouSaida = await resolverLabirinto(proximoX, proximoY);
+
+        if (encontrouSaida) return true; // Se achou, repassa a boa notícia!
+      }
+    }
+
+    // BACKTRACKING: Se chegou aqui, é um beco sem saída. A IA volta (retrocede).
+    return false;
+  }
+
+  // Nova função para calcular e validar o movimento (Coloque dentro de _TelaDoJogoState)
+  void moverPersonagem(DragUpdateDetails detalhes) {
+    int movimentoX = 0;
+    int movimentoY = 0;
+
+    // Lógica para descobrir se o deslize foi na horizontal ou vertical
+    if (detalhes.delta.dx.abs() > detalhes.delta.dy.abs()) {
+      // Horizontal: Direita (+1) ou Esquerda (-1)
+      movimentoX = detalhes.delta.dx > 0 ? 1 : -1;
+    } else {
+      // Vertical: Baixo (+1) ou Cima (-1)
+      movimentoY = detalhes.delta.dy > 0 ? 1 : -1;
+    }
+
+    // Calculamos qual seria a PRÓXIMA posição do personagem
+    int proximoX = posicaoPersonagemX + movimentoX;
+    int proximoY = posicaoPersonagemY + movimentoY;
+
+    // 1. PREVENÇÃO DE ERROS: O personagem não pode sair da tela.
+    if (proximoY >= 0 &&
+        proximoY < mapaDoLabirinto.length &&
+        proximoX >= 0 &&
+        proximoX < mapaDoLabirinto[0].length) {
+      // 2. LÓGICA DE COLISÃO: Verificamos se a próxima posição NÃO é uma parede (1).
+      if (mapaDoLabirinto[proximoY][proximoX] != 1) {
+        // O setState é o comando que avisa o Flutter: "Os dados mudaram, redesenhe a tela!"
+        setState(() {
+          posicaoPersonagemX = proximoX;
+          posicaoPersonagemY = proximoY;
+        });
+      } else {
+        // 3. FEEDBACK DO SISTEMA: Se for parede, avisamos o jogador!
+        ScaffoldMessenger.of(context).clearSnackBars(); // Limpa avisos antigos
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Ops! Bateu na parede."),
+            duration: Duration(milliseconds: 500), // Some rápido da tela
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  // A MATRIZ do labirinto (igual à aula 2).
+  final List<List<int>> mapaDoLabirinto = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 2, 0, 0, 1, 0, 0, 0, 0, 1],
+    [1, 1, 1, 0, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 0, 1, 0, 1, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
+    [1, 0, 1, 0, 0, 0, 1, 0, 1, 1],
+    [1, 0, 1, 0, 1, 1, 1, 0, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 3, 1],
+  ];
+
+  // VARIÁVEIS DE ESTADO: Aqui guardamos a posição atual do personagem.
+  // Começamos na coluna 1 (X) e linha 1 (Y), que é um espaço vazio (0) na matriz.
+  int posicaoPersonagemX = 1;
+  int posicaoPersonagemY = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    int totalDeLinhas = mapaDoLabirinto.length;
+    int totalDeColunas = mapaDoLabirinto[0].length;
+
+    return Scaffold(
+      backgroundColor: Colors.black87,
+      // 3. O BOTÃO "Resolver"
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Limpa a memória e inicia a IA a partir da posição atual
+          for (var linha in lugaresVisitados) {
+            linha.fillRange(0, linha.length, false);
+          }
+          resolverLabirinto(posicaoPersonagemX, posicaoPersonagemY);
+        },
+        child: Icon(Icons.smart_toy), // Ícone de um robozinho
+        backgroundColor: Colors.purpleAccent,
+      ),
+
+      body: Center(
+        // 1. GESTURE DETECTOR: O "ouvido" do nosso aplicativo para toques na tela.
+        child: GestureDetector(
+          // Quando o usuário deslizar, chamamos nossa função de movimento
+          onPanUpdate: (detalhesDoToque) {
+            moverPersonagem(detalhesDoToque);
+          },
+
+          child: AspectRatio(
+            aspectRatio: totalDeColunas / totalDeLinhas,
+            child: GridView.builder(
+              physics: NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: totalDeColunas,
+              ),
+              itemCount: totalDeLinhas * totalDeColunas,
+              itemBuilder: (context, index) {
+                int x = index % totalDeColunas;
+                int y = index ~/ totalDeColunas;
+
+                int valorDoBloco = mapaDoLabirinto[y][x];
+                Color corDoBloco = Colors.white;
+
+                if (valorDoBloco == 1) corDoBloco = Colors.grey;
+                if (valorDoBloco == 3) corDoBloco = Colors.green;
+
+                // 2. DESENHANDO O PERSONAGEM:
+                // Se a posição atual do bloco (x, y) for igual à posição do nosso personagem...
+                if (x == posicaoPersonagemX && y == posicaoPersonagemY) {
+                  corDoBloco = Colors.blue; // ...pintamos esse bloco de azul!
+                }
+
+                return BlocoLabirinto(cor: corDoBloco);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// 1. REFATORAÇÃO: Criamos um Widget focado APENAS em desenhar os blocos
+class BlocoLabirinto extends StatelessWidget {
+  final Color cor;
+
+  // Construtor que exige uma cor na hora de criar a pecinha de LEGO
+  BlocoLabirinto({required this.cor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.all(1),
+      decoration: BoxDecoration(
+        color: cor,
+        borderRadius: BorderRadius.circular(
+          4,
+        ), // Um leve arredondamento para ficar mais bonito!
+      ),
+    );
+  }
+}

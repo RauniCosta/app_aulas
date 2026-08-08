@@ -7,6 +7,35 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Função assíncrona para iniciar sessão (Login)
+  Future<String?> loginUsuario({
+    required String email,
+    required String senha,
+  }) async {
+    try {
+      // Tenta iniciar sessão no Firebase Auth
+      await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: senha.trim(),
+      );
+      
+      return null; // Retorna nulo se o login for bem-sucedido
+
+    } on FirebaseAuthException catch (e) {
+      // Tratamento de erros comuns de login
+      // Nota: O Firebase mais recente usa 'invalid-credential' por segurança, 
+      // para não revelar se o erro foi no e-mail ou na palavra-passe.
+      if (e.code == 'invalid-credential' || e.code == 'user-not-found' || e.code == 'wrong-password') {
+        return 'E-mail ou palavra-passe incorretos.';
+      } else if (e.code == 'invalid-email') {
+        return 'O formato do e-mail é inválido.';
+      }
+      return 'Erro de autenticação: ${e.message}';
+    } catch (e) {
+      return 'Ocorreu um erro inesperado. Tente novamente.';
+    }
+  }
+  
   // Função assíncrona para registrar o usuário
   Future<String?> cadastrarUsuario({
     required String nome,

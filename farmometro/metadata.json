@@ -1,6 +1,0 @@
-{
-  "name": "Mestre da Aura",
-  "description": "Auxiliar do Farmômetro para avaliação de engajamento escolar. Apresenta avatares personalizáveis de anime que sofrem transformações inspiradas em Dragon Ball e One Piece à medida que evoluem seus níveis de Aura.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

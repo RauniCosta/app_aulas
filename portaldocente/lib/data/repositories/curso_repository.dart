@@ -82,4 +82,23 @@ class CursoRepository {
       throw Exception('Erro ao excluir UC: $e');
     }
   }
+
+  /// Atualiza um curso existente
+  Future<void> updateCurso(CursoModel curso) async {
+    try {
+      await _firestore.collection('cursos').doc(curso.id).update(curso.toMap());
+    } catch (e) {
+      throw Exception('Erro ao atualizar curso: $e');
+    }
+  }
+
+  /// Atualiza uma UC existente
+  Future<void> updateUC(UnidadeCurricularModel uc) async {
+    try {
+      await _firestore.collection('ucs').doc(uc.id).update(uc.toMap());
+    } catch (e) {
+      throw Exception('Erro ao atualizar UC: $e');
+    }
+  }
+  
 }

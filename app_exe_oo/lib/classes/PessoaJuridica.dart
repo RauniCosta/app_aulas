@@ -8,7 +8,7 @@ class Pessoajuridica extends Pessoa {
   set cnpj(String cnpj) => _cnpj = cnpj;
 
   Pessoajuridica(String nome, String sobrenome, int idade, String cnpj)
-      : super(nome, sobrenome, idade) {
+      : super() {
     _cnpj = cnpj;
   }
 

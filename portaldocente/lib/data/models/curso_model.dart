@@ -33,4 +33,6 @@ class CursoModel {
       'ativo': ativo,
     };
   }
+
+  
 }

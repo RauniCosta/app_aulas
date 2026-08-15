@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Para o logout
 import 'package:flutter_riverpod/legacy.dart';
-
-
+import '../../dashboard/screens/admin_dashboard_screen.dart';
 import '../../manage_teachers/screens/manage_teachers_screen.dart';
 import '../../manage_courses/screens/manage_courses_screen.dart';
 import '../../scale_builder/screens/scale_builder_screen.dart';
@@ -16,22 +15,21 @@ final adminMenuIndexProvider = StateProvider<int>((ref) => 0);
 class MainWebScreen extends ConsumerWidget {
   const MainWebScreen({Key? key}) : super(key: key);
 
+  static const List<Widget> _telas = [
+    AdminDashboardScreen(),       // Índice 0: Nova Visão Geral
+    ManageTeachersScreen(),       // Índice 1
+    ManageCoursesScreen(),        // Índice 2
+    ScaleBuilderScreen(),         // Índice 3
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(adminMenuIndexProvider);
-
-    // 2. Lista de Telas do Painel
-    final List<Widget> telas = [
-      const ManageTeachersScreen(), // Índice 0
-      const ManageCoursesScreen(),  // Índice 1
-      const ScaleBuilderScreen(),   // Índice 2
-    ];
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Row(
         children: [
-          // --- MENU LATERAL ÚNICO E GLOBAL ---
           Container(
             width: 250,
             color: const Color(0xFF1E5BB2),
@@ -41,14 +39,14 @@ class MainWebScreen extends ConsumerWidget {
                   padding: EdgeInsets.all(30.0),
                   child: Text('EducaLink Admin', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                 ),
-                // Botões de Navegação
-                _buildMenuItem(ref, Icons.people, 'Docentes', 0, currentIndex),
-                _buildMenuItem(ref, Icons.menu_book, 'Cursos e UCs', 1, currentIndex),
-                _buildMenuItem(ref, Icons.calendar_month, 'Montar Escala', 2, currentIndex),
+                // --- MENU ATUALIZADO AQUI ---
+                _buildMenuItem(ref, Icons.dashboard, 'Visão Geral', 0, currentIndex),
+                _buildMenuItem(ref, Icons.people, 'Docentes', 1, currentIndex),
+                _buildMenuItem(ref, Icons.menu_book, 'Cursos e UCs', 2, currentIndex),
+                _buildMenuItem(ref, Icons.calendar_month, 'Montar Escala', 3, currentIndex),
                 
                 const Spacer(),
                 
-                // Botão de Logout Movido para cá
                 ListTile(
                   leading: const Icon(Icons.exit_to_app, color: Colors.white70),
                   title: const Text('Terminar Sessão', style: TextStyle(color: Colors.white70)),
@@ -65,7 +63,7 @@ class MainWebScreen extends ConsumerWidget {
           Expanded(
             child: IndexedStack(
               index: currentIndex,
-              children: telas,
+              children: _telas,
             ),
           ),
         ],

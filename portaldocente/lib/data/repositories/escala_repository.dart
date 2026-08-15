@@ -67,4 +67,21 @@ class EscalaRepository {
       throw Exception('Erro ao salvar/atualizar a escala: $e');
     }
   }
+
+  /// NOVO: Busca todas as escalas cadastradas na instituição (Para a Visão Geral Web)
+  Future<List<EscalaModel>> getAllEscalas() async {
+    try {
+      final snapshot = await _escalasRef.get();
+      return snapshot.docs.map((doc) {
+        return EscalaModel.fromMap(
+          doc.data() as Map<String, dynamic>,
+          doc.id,
+        );
+      }).toList();
+    } catch (e) {
+      throw Exception('Erro ao carregar a matriz de escalas: $e');
+    }
+  }
+
+  
 }

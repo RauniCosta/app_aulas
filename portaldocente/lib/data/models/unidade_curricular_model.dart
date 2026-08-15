@@ -5,7 +5,7 @@ class UnidadeCurricularModel {
   final String cursoId; // Faz a ligação com o CursoModel
   final String nome; // Ex: Lógica de Programação, Edição de Vídeo com IA
   final int cargaHoraria; // Ex: 60
-  final int moduloOuSemestre; // Ex: 1 (Primeiro módulo)
+  final String moduloOuSemestre; // Ex: 1 (Primeiro módulo)
 
   UnidadeCurricularModel({
     required this.id,
@@ -21,7 +21,7 @@ class UnidadeCurricularModel {
       cursoId: map['cursoId'] ?? '',
       nome: map['nome'] ?? '',
       cargaHoraria: map['cargaHoraria']?.toInt() ?? 0,
-      moduloOuSemestre: map['moduloOuSemestre']?.toInt() ?? 1,
+      moduloOuSemestre: map['moduloOuSemestre']?.toString() ?? 'Modulo 1', // Converte com segurança
     );
   }
 

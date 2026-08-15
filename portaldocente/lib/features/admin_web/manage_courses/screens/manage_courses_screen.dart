@@ -6,8 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/curso_providers.dart';
 import 'curso_form_dialog.dart';
 import 'uc_form_dialog.dart';
+import 'turma_form_dialog.dart';
+import 'pdf_import_dialog.dart';
 import '../../../../data/models/curso_model.dart';
 import '../../../../data/models/unidade_curricular_model.dart';
+import '../../../../data/models/turma_model.dart';
 
 class ManageCoursesScreen extends ConsumerWidget {
   const ManageCoursesScreen({Key? key}) : super(key: key);
@@ -27,8 +30,8 @@ class ManageCoursesScreen extends ConsumerWidget {
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Gestão de Cursos e UCs', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                  Text('Organize os cursos e as Unidades Curriculares ofertadas', style: TextStyle(color: Colors.grey)),
+                  Text('Gestão de Cursos, Turmas e UCs', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                  Text('Organize os cursos, turmas ativas e disciplinas ofertadas', style: TextStyle(color: Colors.grey)),
                 ],
               ),
               ElevatedButton.icon(
@@ -42,13 +45,17 @@ class ManageCoursesScreen extends ConsumerWidget {
                     try {
                       await ref.read(cursoRepositoryProvider).addCurso(novoCurso);
                       ref.invalidate(cursosListProvider);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Curso criado com sucesso! ✅'), backgroundColor: Colors.green),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Curso criado com sucesso! ✅'), backgroundColor: Colors.green),
+                        );
+                      }
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erro ao salvar curso: $e'), backgroundColor: Colors.red),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Erro ao salvar curso: $e'), backgroundColor: Colors.red),
+                        );
+                      }
                     }
                   }
                 },
@@ -85,8 +92,6 @@ class ManageCoursesScreen extends ConsumerWidget {
                           leading: const Icon(Icons.school, color: Color(0xFF1E5BB2)),
                           title: Text(curso.nome, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           subtitle: Text('Modalidade: ${curso.modalidade} | Carga Horária: ${curso.cargaHorariaTotal}h'),
-                          
-                          // BOTÕES DO CURSO (EDITAR E EXCLUIR)
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -131,32 +136,113 @@ class ManageCoursesScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // --- SEÇÃO 1: TURMAS DO CURSO ---
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('Turmas Cadastradas:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                      ElevatedButton.icon(
+                                        onPressed: () async {
+                                          final novaTurma = await showDialog<TurmaModel>(
+                                            context: context,
+                                            builder: (context) => TurmaFormDialog(cursoId: curso.id),
+                                          );
+
+                                          if (novaTurma != null) {
+                                            await ref.read(cursoRepositoryProvider).addTurma(novaTurma);
+                                            ref.invalidate(turmasPorCursoProvider(curso.id));
+                                          }
+                                        },
+                                        icon: const Icon(Icons.group_add, size: 18),
+                                        label: const Text('Criar Turma'),
+                                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // Lista de Turmas do Curso
+                                  Consumer(
+                                    builder: (context, ref, child) {
+                                      final turmasAsync = ref.watch(turmasPorCursoProvider(curso.id));
+
+                                      return turmasAsync.when(
+                                        loading: () => const LinearProgressIndicator(),
+                                        error: (err, stack) => Text('Erro ao carregar turmas: $err'),
+                                        data: (turmas) {
+                                          if (turmas.isEmpty) {
+                                            return const Padding(
+                                              padding: EdgeInsets.symmetric(vertical: 8),
+                                              child: Text('Nenhuma turma cadastrada ainda para este curso.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                                            );
+                                          }
+                                          return Wrap(
+                                            spacing: 10,
+                                            runSpacing: 10,
+                                            children: turmas.map((t) {
+                                              return Chip(
+                                                avatar: const Icon(Icons.group, size: 16, color: Color(0xFF1E5BB2)),
+                                                label: Text(t.periodoFormatado, style: const TextStyle(fontSize: 12)),
+                                                backgroundColor: Colors.blue.shade50,
+                                              );
+                                            }).toList(),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+
+                                  const Divider(height: 30),
+
+                                  // --- SEÇÃO 2: UNIDADES CURRICULARES (UCs) ---
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       const Text('Unidades Curriculares (UCs):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                      
-                                      OutlinedButton.icon(
-                                        onPressed: () async {
-                                          final novaUC = await showDialog<UnidadeCurricularModel>(
-                                            context: context,
-                                            builder: (context) => UCFormDialog(cursoId: curso.id),
-                                          );
+                                      Row(
+                                        children: [
+                                          OutlinedButton.icon(
+                                            onPressed: () async {
+                                              final novaUC = await showDialog<UnidadeCurricularModel>(
+                                                context: context,
+                                                builder: (context) => UCFormDialog(cursoId: curso.id),
+                                              );
 
-                                          if (novaUC != null) {
-                                            await ref.read(cursoRepositoryProvider).addUC(novaUC);
-                                            ref.invalidate(ucsPorCursoProvider(curso.id));
-                                          }
-                                        },
-                                        icon: const Icon(Icons.add, size: 18),
-                                        label: const Text('Adicionar UC'),
-                                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1E5BB2)),
+                                              if (novaUC != null) {
+                                                await ref.read(cursoRepositoryProvider).addUC(novaUC);
+                                                ref.invalidate(ucsPorCursoProvider(curso.id));
+                                              }
+                                            },
+                                            icon: const Icon(Icons.add, size: 18),
+                                            label: const Text('Adicionar UC'),
+                                            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1E5BB2)),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          OutlinedButton.icon(
+                                            onPressed: () async {
+                                              final List<UnidadeCurricularModel>? ucsExtraidas = await showDialog<List<UnidadeCurricularModel>>(
+                                                context: context,
+                                                builder: (context) => PdfImportDialog(cursoId: curso.id),
+                                              );
+
+                                              if (ucsExtraidas != null && ucsExtraidas.isNotEmpty) {
+                                                for (var uc in ucsExtraidas) {
+                                                  await ref.read(cursoRepositoryProvider).addUC(uc);
+                                                }
+                                                ref.invalidate(ucsPorCursoProvider(curso.id));
+                                              }
+                                            },
+                                            icon: const Icon(Icons.upload_file, size: 18, color: Colors.orange),
+                                            label: const Text('Importar PDF', style: TextStyle(color: Colors.orange)),
+                                            style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.orange)),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 15),
 
-                                  // LISTA DE UCs COM BOTÕES DE EDIÇÃO
+                                  // Lista de UCs
                                   Consumer(
                                     builder: (context, ref, child) {
                                       final ucsAsync = ref.watch(ucsPorCursoProvider(curso.id));
@@ -178,32 +264,12 @@ class ManageCoursesScreen extends ConsumerWidget {
                                                 leading: const Icon(Icons.book, size: 20, color: Colors.grey),
                                                 title: Text(uc.nome, style: const TextStyle(fontWeight: FontWeight.w500)),
                                                 subtitle: Text('Carga Horária: ${uc.cargaHoraria}h'),
-                                                
-                                                // BOTÕES DA UC (EDITAR E EXCLUIR)
-                                                trailing: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    IconButton(
-                                                      icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
-                                                      onPressed: () async {
-                                                        final ucEditada = await showDialog<UnidadeCurricularModel>(
-                                                          context: context,
-                                                          builder: (context) => UCFormDialog(cursoId: curso.id, ucExistente: uc),
-                                                        );
-                                                        if (ucEditada != null) {
-                                                          await ref.read(cursoRepositoryProvider).updateUC(ucEditada);
-                                                          ref.invalidate(ucsPorCursoProvider(curso.id));
-                                                        }
-                                                      },
-                                                    ),
-                                                    IconButton(
-                                                      icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                                                      onPressed: () async {
-                                                        await ref.read(cursoRepositoryProvider).deleteUC(uc.id);
-                                                        ref.invalidate(ucsPorCursoProvider(curso.id));
-                                                      },
-                                                    ),
-                                                  ],
+                                                trailing: IconButton(
+                                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                                  onPressed: () async {
+                                                    await ref.read(cursoRepositoryProvider).deleteUC(uc.id);
+                                                    ref.invalidate(ucsPorCursoProvider(curso.id));
+                                                  },
                                                 ),
                                               );
                                             }).toList(),

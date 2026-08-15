@@ -8,8 +8,7 @@ class UCFormDialog extends StatefulWidget {
   final UnidadeCurricularModel?
   ucExistente; // NOVO: Permite receber uma UC para edição
 
-  const UCFormDialog({Key? key, required this.cursoId, this.ucExistente})
-    : super(key: key);
+  const UCFormDialog({super.key, required this.cursoId, this.ucExistente});
 
   @override
   State<UCFormDialog> createState() => _UCFormDialogState();
@@ -99,7 +98,7 @@ class _UCFormDialogState extends State<UCFormDialog> {
                 nome: _nomeController.text.trim(),
                 cargaHoraria: int.parse(_cargaHorariaController.text.trim()),
                 // CORREÇÃO: Passar String vazia em vez de null
-                moduloOuSemestre: 0,
+                moduloOuSemestre: "Modulo 1",
               );
               Navigator.pop(context, ucPronta);
             }

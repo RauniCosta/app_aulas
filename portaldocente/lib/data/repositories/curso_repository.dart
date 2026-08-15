@@ -1,6 +1,7 @@
 // Ficheiro: lib/data/repositories/curso_repository.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:portaldocente/data/models/turma_model.dart';
 import '../models/curso_model.dart';
 import '../models/unidade_curricular_model.dart';
 
@@ -98,6 +99,31 @@ class CursoRepository {
       await _firestore.collection('ucs').doc(uc.id).update(uc.toMap());
     } catch (e) {
       throw Exception('Erro ao atualizar UC: $e');
+    }
+  }
+
+  // --- TURMAS ---
+
+  /// Adiciona uma nova turma vinculada a um curso
+  Future<void> addTurma(TurmaModel turma) async {
+    try {
+      await _firestore.collection('turmas').add(turma.toMap());
+    } catch (e) {
+      throw Exception('Erro ao cadastrar turma: $e');
+    }
+  }
+
+  /// Busca todas as turmas cadastradas para um determinado curso
+  Future<List<TurmaModel>> getTurmasPorCurso(String cursoId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('turmas')
+          .where('cursoId', isEqualTo: cursoId)
+          .get();
+
+      return snapshot.docs.map((doc) => TurmaModel.fromMap(doc.data(), doc.id)).toList();
+    } catch (e) {
+      throw Exception('Erro ao buscar turmas: $e');
     }
   }
   

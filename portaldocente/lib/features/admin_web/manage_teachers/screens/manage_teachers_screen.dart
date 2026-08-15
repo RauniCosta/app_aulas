@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/docente_providers.dart';
 import 'docente_form_dialog.dart';
 import '../../../../data/models/docente_model.dart';
-import '../../../../data/repositories/docente_repository.dart';
 
 class ManageTeachersScreen extends ConsumerWidget {
   const ManageTeachersScreen({Key? key}) : super(key: key);

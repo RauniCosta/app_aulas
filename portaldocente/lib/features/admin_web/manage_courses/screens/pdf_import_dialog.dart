@@ -1,0 +1,191 @@
+// Ficheiro: lib/features/admin_web/manage_courses/screens/pdf_import_dialog.dart
+
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+
+import '../../../../data/models/unidade_curricular_model.dart';
+
+class PdfImportDialog extends StatefulWidget {
+  final String cursoId;
+
+  const PdfImportDialog({Key? key, required this.cursoId}) : super(key: key);
+
+  @override
+  State<PdfImportDialog> createState() => _PdfImportDialogState();
+}
+
+class _PdfImportDialogState extends State<PdfImportDialog> {
+  bool _processando = false;
+  String? _nomeArquivo;
+  List<UnidadeCurricularModel> _ucsExtraidas = [];
+
+  // Função que lê o PDF em memória e extrai as UCs e Carga Horária exata
+  Future<void> _selecionarEProcessarPdf() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: true,
+    );
+
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _processando = true;
+        _nomeArquivo = result.files.single.name;
+        _ucsExtraidas.clear();
+      });
+
+      try {
+        final Uint8List bytes = result.files.single.bytes!;
+        final PdfDocument document = PdfDocument(inputBytes: bytes);
+        final String textoCompleto = PdfTextExtractor(document).extractText();
+        document.dispose();
+
+        final List<UnidadeCurricularModel> ucsEncontradas = [];
+        final linhas = textoCompleto.split('\n');
+
+        // Regex 1: Identifica o início de uma disciplina (Ex: "UC3: Modelar banco...")
+        final regexUC = RegExp(r'UC\s*(\d+)\s*[:\-]\s*(.+)', caseSensitive: false);
+        
+        // Regex 2: Procura EXATAMENTE pelo padrão informado "CARGA HORÁRIA: 108 HORAS"
+        final regexCargaHoraria = RegExp(r'CARGA\s*HOR[AÁ]RIA\s*:\s*(\d+)', caseSensitive: false);
+
+        for (int i = 0; i < linhas.length; i++) {
+          final l = linhas[i].trim();
+          if (l.isEmpty) continue;
+
+          final matchUC = regexUC.firstMatch(l);
+
+          if (matchUC != null) {
+            final String numUC = matchUC.group(1)?.trim() ?? '';
+            String conteudoLinha = matchUC.group(2)?.trim() ?? '';
+
+            int horas = 0;
+
+            // PROCURA AVANÇADA: Olha a linha atual e desce até 15 linhas abaixo 
+            // procurando a frase "CARGA HORÁRIA: X"
+            for (int j = i; j < i + 15 && j < linhas.length; j++) {
+              final linhaBusca = linhas[j].trim();
+
+              // Se no meio da busca ele tropeçar na PRÓXIMA disciplina, ele para a busca 
+              // para não roubar as horas da disciplina de baixo!
+              if (j > i && regexUC.hasMatch(linhaBusca)) {
+                break; 
+              }
+
+              // Tenta achar o "CARGA HORÁRIA: 108"
+              final matchCH = regexCargaHoraria.firstMatch(linhaBusca);
+              if (matchCH != null) {
+                horas = int.tryParse(matchCH.group(1) ?? '0') ?? 0;
+                break; // Achou as horas reais, pode parar de descer as linhas!
+              }
+            }
+
+            // Se mesmo assim não achar (ex: o PDF estava cortado), coloca 60 como segurança
+            if (horas == 0) horas = 60;
+
+            // Limpa o nome da disciplina caso as horas estivessem grudadas no título
+            conteudoLinha = conteudoLinha.replaceAll(RegExp(r'[-–—:;]+$'), '').trim();
+
+            if (conteudoLinha.length > 3) {
+              final String nomeFormatado = 'UC$numUC - $conteudoLinha';
+
+              ucsEncontradas.add(UnidadeCurricularModel(
+                id: "",
+                cursoId: widget.cursoId,
+                nome: nomeFormatado,
+                cargaHoraria: horas, // Usa as horas reais capturadas
+                moduloOuSemestre: "Modulo $numUC",
+              ));
+            }
+          }
+        }
+
+        setState(() {
+          _ucsExtraidas = ucsEncontradas;
+          _processando = false;
+        });
+
+      } catch (e) {
+        setState(() => _processando = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao ler PDF: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
+  
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Importar UCs via Plano em PDF'),
+      content: SizedBox(
+        width: 500,
+        height: 400,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Selecione o arquivo PDF da ementa do curso. O sistema identificará automaticamente as disciplinas e cargas horárias.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 15),
+
+            ElevatedButton.icon(
+              onPressed: _processando ? null : _selecionarEProcessarPdf,
+              icon: const Icon(Icons.picture_as_pdf),
+              label: Text(_nomeArquivo == null ? 'Selecionar Arquivo PDF' : 'Trocar PDF ($_nomeArquivo)'),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+            ),
+            const SizedBox(height: 15),
+
+            if (_processando)
+              const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
+
+            if (!_processando && _ucsExtraidas.isNotEmpty) ...[
+              Text(
+                '${_ucsExtraidas.length} Unidades Curriculares identificadas:',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _ucsExtraidas.length,
+                  itemBuilder: (context, index) {
+                    final uc = _ucsExtraidas[index];
+                    return ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.check_circle_outline, color: Colors.green, size: 18),
+                      title: Text(uc.nome, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      subtitle: Text('Carga Horária: ${uc.cargaHoraria}h'),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+        ),
+        ElevatedButton(
+          onPressed: _ucsExtraidas.isEmpty
+              ? null
+              : () {
+                  // Devolve a lista inteira de UCs extraídas do PDF!
+                  Navigator.pop(context, _ucsExtraidas);
+                },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          child: const Text('Confirmar e Salvar Todas'),
+        ),
+      ],
+    );
+  }
+}

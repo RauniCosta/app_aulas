@@ -1,31 +1,31 @@
 // Ficheiro: lib/features/teacher_mobile/agenda/providers/agenda_providers.dart
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../data/models/escala_model.dart';
+import '../../../../data/repositories/escala_repository.dart';
 
-// Provider que simula a agenda de um professor específico.
-// Agora atualizado para a nossa nova estrutura de Blocos e Turnos!
-final agendaDoDiaProvider = Provider<List<EscalaModel>>((ref) {
-  return [
-    EscalaModel(
-      id: 'e1',
-      idCurso: 'Desenvolvimento de Sistemas', 
-      nomeUnidadeCurricular: 'Modelagem de Sistemas',
-      idDocentes: ['Ricardo Silva', 'Ana Souza'], // Dois professores!
-      diaDaSemana: 'Segunda-feira', // NOVO: Substituiu o dataHoraInicio
-      blocoTurno: 'Manhã (08:00 - 12:30)', // NOVO: Substituiu o dataHoraFim
-      sala: 'Sala 301, Bloco C',
-      confirmada: true,
-    ),
-    EscalaModel(
-      id: 'e2',
-      idCurso: 'Técnico em Informática',
-      nomeUnidadeCurricular: 'Lógica de Programação',
-      idDocentes: ['Ricardo Silva'],
-      diaDaSemana: 'Segunda-feira',
-      blocoTurno: 'Tarde (13:30 - 17:30)',
-      sala: 'Lab 2, Bloco A',
-      confirmada: true,
-    ),
-  ];
+final escalaRepoProvider = Provider((ref) => EscalaRepository());
+
+// StreamProvider: Escuta o Firebase em TEMPO REAL!
+final agendaDoProfessorProvider = StreamProvider.autoDispose<List<EscalaModel>>((ref) async* {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    yield [];
+    return;
+  }
+
+  // 1. Busca o nome do professor logado no documento do usuário
+  final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+  final nomeProfessor = userDoc.data()?['nome'] ?? '';
+
+  if (nomeProfessor.isEmpty) {
+    yield [];
+    return;
+  }
+
+  // 2. Retorna o Stream em tempo real da coleção 'escalas'
+  final repo = ref.read(escalaRepoProvider);
+  yield* repo.streamEscalasDoDocente(nomeProfessor);
 });

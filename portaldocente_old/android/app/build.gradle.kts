@@ -9,7 +9,10 @@ plugins {
 
 android {
     namespace = "com.example.portaldocente"
-    compileSdk = 36
+    compileSdk = 34
+    buildFeatures {
+        dataBinding = true
+    }
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -20,7 +23,7 @@ android {
     defaultConfig {
         applicationId = "com.example.portaldocente"
         minSdk = flutter.minSdkVersion
-        targetSdk = 36
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

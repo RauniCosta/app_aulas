@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../agenda/providers/agenda_providers.dart';
-import '../../perfil/screens/perfil_screen.dart'; // Para dados do professor
-import '../../../../data/models/escala_model.dart';
+import '../../perfil/screens/perfil_screen.dart'; 
 import '../../main_layout/screens/main_mobile_screen.dart';
+import '../../../../data/models/curso_model.dart';
+import '../../../admin_web/manage_courses/providers/curso_providers.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -18,29 +19,48 @@ class DashboardScreen extends ConsumerWidget {
     if (hora < 18) return 'Boa tarde';
     return 'Boa noite';
   }
-
+  
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = FirebaseAuth.instance.currentUser;
     final dadosDocenteAsync = ref.watch(dadosDocenteLogadoProvider);
     final agendaAsync = ref.watch(agendaDoProfessorProvider);
+    
+    final cursosAsync = ref.watch(cursosListProvider);
+    final listaCursos = cursosAsync.maybeWhen(
+      data: (cursos) => cursos,
+      orElse: () => <CursoModel>[],
+    );
+
+    String obterNomeCurso(String idCurso) {
+      for (final curso in listaCursos) {
+        if (curso.id == idCurso) return curso.nome;
+      }
+      return idCurso;
+    }
+
+    // Capturando as cores do nosso novo tema EduSync
+    final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
+    final accentColor = const Color(0xFFFFC107); // Amarelo Âmbar
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      // Herda automaticamente o Verde Menta do fundo (scaffoldBackgroundColor)
+      backgroundColor: theme.scaffoldBackgroundColor, 
       body: CustomScrollView(
         slivers: [
-          // --- HEADER COM SAUDAÇÃO PERSONALIZADA ---
+          // --- HEADER COM NOVO GRADIENTE VERDE ---
           SliverAppBar(
             expandedHeight: 140,
             floating: false,
             pinned: true,
-            backgroundColor: const Color(0xFF1E5BB2),
+            backgroundColor: primaryColor,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 50),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF1E5BB2), Color(0xFF14428D)],
+                    colors: [primaryColor, const Color(0xFF1B4332)], // Verde Esmeralda para Verde Floresta
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -78,15 +98,49 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
 
-          // --- CONTEÚDO PRINCIPAL ---
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- 1. BANNER "PRÓXIMA AULA / AULA ATUAL" ---
-                  const Text('Sua Próxima Aula', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  
+                  // --- 1. RESUMO DO DIA ---
+                  agendaAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (escalas) {
+                      final totalAulasHoje = escalas.length > 3 ? 3 : escalas.length; 
+                      if (totalAulasHoje == 0) return const SizedBox.shrink();
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Seu dia hoje', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                              Text('0 de $totalAulasHoje aulas', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 13)),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: 0.0, 
+                              minHeight: 8,
+                              backgroundColor: Colors.grey[300],
+                              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                        ],
+                      );
+                    },
+                  ),
+
+                  // --- 2. DESTAQUE: PRÓXIMA AULA ---
+                  const Text('Próxima Aula', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 12),
 
                   agendaAsync.when(
@@ -100,22 +154,23 @@ class DashboardScreen extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: Colors.grey.shade200, width: 2),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: Colors.blue.shade50, shape: BoxShape.circle),
-                                child: const Icon(Icons.event_available, color: Color(0xFF1E5BB2), size: 30),
+                                decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), shape: BoxShape.circle),
+                                child: Icon(Icons.check_circle_outline, color: primaryColor, size: 30),
                               ),
                               const SizedBox(width: 15),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Nenhuma aula agendada agora', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                    Text('Aproveite seu tempo livre ou consulte a agenda completa.', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                    const Text('Dia livre!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                    const SizedBox(height: 2),
+                                    Text('Você não tem aulas agendadas para agora.', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                                   ],
                                 ),
                               ),
@@ -124,21 +179,21 @@ class DashboardScreen extends ConsumerWidget {
                         );
                       }
 
-                      // Pega a primeira aula da lista como a próxima/atual
                       final proximaAula = escalas.first;
+                      final nomeDoCurso = obterNomeCurso(proximaAula.idCurso);
 
                       return Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1E5BB2), Color(0xFF2A6FD6)],
+                          gradient: LinearGradient(
+                            colors: [primaryColor, const Color(0xFF236B42)], // Novo gradiente verde
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
-                            BoxShadow(color: const Color(0xFF1E5BB2).withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
+                            BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
                           ],
                         ),
                         child: Column(
@@ -148,49 +203,52 @@ class DashboardScreen extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: Text(
-                                    proximaAula.diaDaSemana.toUpperCase(),
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.schedule, color: Colors.white, size: 14),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        proximaAula.blocoTurno.split(' ').last, 
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange,
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: accentColor, // Amarelo Âmbar de Destaque
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: Text(
-                                    proximaAula.sala,
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.room, color: Colors.black87, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        proximaAula.sala,
+                                        style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 12),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 15),
+                            const SizedBox(height: 20),
                             Text(
                               proximaAula.nomeUnidadeCurricular,
-                              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, height: 1.2),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 8),
                             Text(
-                              'Curso: ${proximaAula.idCurso} (${proximaAula.turma})',
+                              '$nomeDoCurso - ${proximaAula.turma}', 
                               style: const TextStyle(color: Colors.white70, fontSize: 13),
-                            ),
-                            const Divider(color: Colors.white30, height: 25),
-                            Row(
-                              children: [
-                                const Icon(Icons.access_time, color: Colors.white70, size: 18),
-                                const SizedBox(width: 8),
-                                Text(
-                                  proximaAula.blocoTurno,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-                                ),
-                              ],
                             ),
                           ],
                         ),
@@ -198,102 +256,39 @@ class DashboardScreen extends ConsumerWidget {
                     },
                   ),
 
-                  const SizedBox(height: 25),
-
-                  // --- 2. PAINEL DE MÉTRICAS RÁPIDAS ---
-                  const Text('Resumo da Semana', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                  const SizedBox(height: 12),
-
-                  agendaAsync.when(
-                    loading: () => const LinearProgressIndicator(),
-                    error: (_, __) => const SizedBox.shrink(),
-                    data: (escalas) {
-                      final totalAulas = escalas.length;
-                      final totalCursos = escalas.map((e) => e.idCurso).toSet().length;
-
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: _buildMetricCard('Aulas Agendadas', '$totalAulas', Icons.calendar_today, Colors.blue),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildMetricCard('Cursos Ativos', '$totalCursos', Icons.school, Colors.green),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
                   // --- 3. ATALHOS RÁPIDOS ---
-                  const Text('Acesso Rápido', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                  const SizedBox(height: 12),
+                  const Text('O que você precisa fazer?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const SizedBox(height: 15),
 
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildQuickActionButton(
-                        context: context,
-                        ref: ref,
-                        icon: Icons.calendar_month,
-                        label: 'Ver Agenda',
-                        targetIndex: 1, // Redireciona para a aba Agenda
+                      Expanded(
+                        child: _buildActionButton(
+                          icon: Icons.checklist,
+                          label: 'Frequência',
+                          color: primaryColor,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lançamento de Frequência em breve!')));
+                          },
+                        ),
                       ),
-                      _buildQuickActionButton(
-                        context: context,
-                        ref: ref,
-                        icon: Icons.grid_view,
-                        label: 'Minhas Turmas',
-                        targetIndex: 2, // Redireciona para a aba Cursos
-                      ),
-                      _buildQuickActionButton(
-                        context: context,
-                        ref: ref,
-                        icon: Icons.person_outline,
-                        label: 'Meu Perfil',
-                        targetIndex: 3, // Redireciona para a aba Perfil
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: _buildActionButton(
+                          icon: Icons.menu_book,
+                          label: 'Minhas Turmas',
+                          color: accentColor,
+                          iconColor: Colors.black87, // Contraste melhor com o amarelo
+                          onTap: () {
+                            ref.read(bottomNavIndexProvider.notifier).state = 2; 
+                          },
+                        ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 25),
-
-                  // --- 4. MURAL DE COMUNICADOS / AVISOS ---
-                  const Text('Mural da Coordenação', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-                  const SizedBox(height: 12),
-
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.campaign, color: Color(0xFF1E5BB2), size: 28),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Lembrete: Atualização de Frequências',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Prezado docente, lembre-se de registrar a presença dos alunos ao término de cada bloco pedagógico.',
-                                  style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.3),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -303,60 +298,40 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-              Text(title, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionButton({
-    required BuildContext context,
-    required WidgetRef ref,
-    required IconData icon,
-    required String label,
-    required int targetIndex,
+  Widget _buildActionButton({
+    required IconData icon, 
+    required String label, 
+    required Color color, 
+    Color? iconColor,
+    required VoidCallback onTap
   }) {
     return InkWell(
-      onTap: () {
-        // Altera a aba no BottomNavigationBar
-        ref.read(bottomNavIndexProvider.notifier).state = targetIndex;
-      },
-      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
       child: Container(
-        width: 100,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4))],
+          border: Border.all(color: Colors.grey.shade100),
         ),
         child: Column(
           children: [
-            Icon(icon, color: const Color(0xFF1E5BB2), size: 26),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87)),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor ?? color, size: 28),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

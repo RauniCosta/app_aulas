@@ -77,7 +77,7 @@ class ManageCoursesScreen extends ConsumerWidget {
                 icon: const Icon(Icons.add),
                 label: const Text('Novo Curso'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E5BB2),
+                  backgroundColor: const Color(0xFF2E8B57),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 15,
@@ -117,10 +117,10 @@ class ManageCoursesScreen extends ConsumerWidget {
                         return ExpansionTile(
                           leading: const Icon(
                             Icons.school,
-                            color: Color(0xFF1E5BB2),
+                            color: Color(0xFF2E8B57),
                           ),
                           title: Text(
-                            curso.nome,
+                            '${curso.nome} (${curso.sigla})',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -238,7 +238,7 @@ class ManageCoursesScreen extends ConsumerWidget {
                                         label: const Text('Criar Turma'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(
-                                            0xFF1E5BB2,
+                                            0xFF2E8B57,
                                           ),
                                         ),
                                       ),
@@ -278,20 +278,105 @@ class ManageCoursesScreen extends ConsumerWidget {
                                             spacing: 10,
                                             runSpacing: 10,
                                             children: turmas.map((t) {
-                                              return Chip(
+                                              return InputChip(
                                                 avatar: const Icon(
                                                   Icons.group,
                                                   size: 16,
-                                                  color: Color(0xFF1E5BB2),
+                                                  color: Color(0xFF2E8B57),
                                                 ),
                                                 label: Text(
                                                   t.periodoFormatado,
                                                   style: const TextStyle(
                                                     fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                                 backgroundColor:
                                                     Colors.blue.shade50,
+                                                deleteIcon: const Icon(
+                                                  Icons.close,
+                                                  size: 16,
+                                                  color: Colors.red,
+                                                ),
+                                                onDeleted: () async {
+                                                  final confirmar =
+                                                      await showDialog<bool>(
+                                                        context: context,
+                                                        builder: (ctx) => AlertDialog(
+                                                          title: const Text(
+                                                            'Excluir Turma?',
+                                                          ),
+                                                          content: Text(
+                                                            'Deseja excluir a turma ${t.nome}?',
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    false,
+                                                                  ),
+                                                              child: const Text(
+                                                                'Cancelar',
+                                                              ),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    true,
+                                                                  ),
+                                                              child: const Text(
+                                                                'Excluir',
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .red,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                  if (confirmar == true) {
+                                                    await ref
+                                                        .read(
+                                                          cursoRepositoryProvider,
+                                                        )
+                                                        .deleteTurma(t.id);
+                                                    ref.invalidate(
+                                                      turmasPorCursoProvider(
+                                                        curso.id,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                onPressed: () async {
+                                                  final turmaEditada =
+                                                      await showDialog<
+                                                        TurmaModel
+                                                      >(
+                                                        context: context,
+                                                        builder: (context) =>
+                                                            TurmaFormDialog(
+                                                              cursoId: curso.id,
+                                                              turmaExistente: t,
+                                                            ),
+                                                      );
+                                                  if (turmaEditada != null) {
+                                                    await ref
+                                                        .read(
+                                                          cursoRepositoryProvider,
+                                                        )
+                                                        .updateTurma(
+                                                          turmaEditada,
+                                                        );
+                                                    ref.invalidate(
+                                                      turmasPorCursoProvider(
+                                                        curso.id,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
                                               );
                                             }).toList(),
                                           );
@@ -347,7 +432,7 @@ class ManageCoursesScreen extends ConsumerWidget {
                                             label: const Text('Adicionar UC'),
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor: const Color(
-                                                0xFF1E5BB2,
+                                                0xFF2E8B57,
                                               ),
                                             ),
                                           ),
@@ -385,17 +470,17 @@ class ManageCoursesScreen extends ConsumerWidget {
                                             icon: const Icon(
                                               Icons.table_chart,
                                               size: 18,
-                                              color: Colors.orange,
+                                              color: Color(0xFFFFC107),
                                             ), // Mudei o ícone para table_chart
                                             label: const Text(
                                               'Importar CSV',
                                               style: TextStyle(
-                                                color: Colors.orange,
+                                                color: Color(0xFFFFC107),
                                               ),
                                             ),
                                             style: OutlinedButton.styleFrom(
                                               side: const BorderSide(
-                                                color: Colors.orange,
+                                                color: Color(0xFFFFC107),
                                               ),
                                             ),
                                           ),
@@ -432,31 +517,72 @@ class ManageCoursesScreen extends ConsumerWidget {
                                               ),
                                             );
                                           }
-                                          return Column(
+                                          return Wrap(
+                                            spacing: 10,
+                                            runSpacing: 10,
                                             children: ucs.map((uc) {
-                                              return ListTile(
-                                                dense: true,
-                                                leading: const Icon(
+                                              return InputChip(
+                                                avatar: const Icon(
                                                   Icons.book,
-                                                  size: 20,
-                                                  color: Colors.grey,
+                                                  size: 16,
+                                                  color: Color(0xFF2E8B57),
                                                 ),
-                                                title: Text(
-                                                  uc.nome,
+                                                // Mostra a Sigla e a Carga Horária
+                                                label: Text(
+                                                  '${uc.sigla} - ${uc.cargaHoraria}h',
                                                   style: const TextStyle(
-                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12,
                                                   ),
                                                 ),
-                                                subtitle: Text(
-                                                  'Carga Horária: ${uc.cargaHoraria}h',
+                                                backgroundColor: Colors
+                                                    .orange
+                                                    .shade50, // Cor levemente diferente para distinguir das turmas
+                                                deleteIcon: const Icon(
+                                                  Icons.close,
+                                                  size: 16,
+                                                  color: Colors.red,
                                                 ),
-                                                trailing: IconButton(
-                                                  icon: const Icon(
-                                                    Icons.delete_outline,
-                                                    color: Colors.red,
-                                                    size: 18,
-                                                  ),
-                                                  onPressed: () async {
+                                                onDeleted: () async {
+                                                  final confirmar =
+                                                      await showDialog<bool>(
+                                                        context: context,
+                                                        builder: (ctx) => AlertDialog(
+                                                          title: const Text(
+                                                            'Excluir UC?',
+                                                          ),
+                                                          content: Text(
+                                                            'Deseja excluir a disciplina ${uc.nome}?',
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    false,
+                                                                  ),
+                                                              child: const Text(
+                                                                'Cancelar',
+                                                              ),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    true,
+                                                                  ),
+                                                              child: const Text(
+                                                                'Excluir',
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .red,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+
+                                                  if (confirmar == true) {
                                                     await ref
                                                         .read(
                                                           cursoRepositoryProvider,
@@ -467,8 +593,20 @@ class ManageCoursesScreen extends ConsumerWidget {
                                                         curso.id,
                                                       ),
                                                     );
-                                                  },
-                                                ),
+                                                  }
+                                                },
+                                                onPressed: () async {
+                                                  await ref
+                                                      .read(
+                                                        cursoRepositoryProvider,
+                                                      )
+                                                      .deleteUC(uc.id);
+                                                  ref.invalidate(
+                                                    ucsPorCursoProvider(
+                                                      curso.id,
+                                                    ),
+                                                  );
+                                                },
                                               );
                                             }).toList(),
                                           );

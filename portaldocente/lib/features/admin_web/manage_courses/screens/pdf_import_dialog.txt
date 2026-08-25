@@ -139,7 +139,7 @@ class _PdfImportDialogState extends State<PdfImportDialog> {
               onPressed: _processando ? null : _selecionarEProcessarPdf,
               icon: const Icon(Icons.picture_as_pdf),
               label: Text(_nomeArquivo == null ? 'Selecionar Arquivo PDF' : 'Trocar PDF ($_nomeArquivo)'),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E8B57)),
             ),
             const SizedBox(height: 15),
 

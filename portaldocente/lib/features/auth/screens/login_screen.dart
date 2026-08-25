@@ -38,7 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E5BB2), // Azul da nossa marca
+      backgroundColor: const Color(0xFF2E8B57), // Azul da nossa marca
       body: Center(
         child: Container(
           width: 400, // Limita a largura para ficar bonito tanto em Web como Mobile
@@ -51,7 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.school, size: 60, color: Color(0xFF1E5BB2)),
+              const Icon(Icons.school, size: 60, color: Color(0xFF2E8B57)),
               const SizedBox(height: 20),
               const Text('EducaLink Login', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 30),
@@ -71,7 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _fazerLogin,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E8B57)),
                   child: _isLoading 
                       ? const CircularProgressIndicator(color: Colors.white) 
                       : const Text('Entrar', style: TextStyle(fontSize: 18)),

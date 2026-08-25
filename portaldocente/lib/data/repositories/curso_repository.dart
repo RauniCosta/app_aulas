@@ -1,7 +1,7 @@
 // Ficheiro: lib/data/repositories/curso_repository.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:portaldocente/data/models/turma_model.dart';
+import 'package:edusync/data/models/turma_model.dart';
 import '../models/curso_model.dart';
 import '../models/unidade_curricular_model.dart';
 
@@ -110,6 +110,23 @@ class CursoRepository {
       await _firestore.collection('turmas').add(turma.toMap());
     } catch (e) {
       throw Exception('Erro ao cadastrar turma: $e');
+    }
+  }
+  /// Atualiza os dados de uma turma existente
+  Future<void> updateTurma(TurmaModel turma) async {
+    try {
+      await _firestore.collection('turmas').doc(turma.id).update(turma.toMap());
+    } catch (e) {
+      throw Exception('Erro ao atualizar turma: $e');
+    }
+  }
+
+  /// Exclui uma turma do banco de dados
+  Future<void> deleteTurma(String id) async {
+    try {
+      await _firestore.collection('turmas').doc(id).delete();
+    } catch (e) {
+      throw Exception('Erro ao excluir turma: $e');
     }
   }
 

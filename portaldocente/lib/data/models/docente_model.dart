@@ -3,6 +3,7 @@
 class DocenteModel {
   final String id;
   final String nome;
+  final String sigla;
   final String titulo;
   final String email;
   final String telefone;
@@ -13,6 +14,7 @@ class DocenteModel {
   DocenteModel({
     required this.id,
     required this.nome,
+    required this.sigla,
     this.titulo = 'Prof.',
     required this.email,
     this.telefone = '',
@@ -25,6 +27,7 @@ class DocenteModel {
     return DocenteModel(
       id: documentId,
       nome: map['nome'] ?? '',
+      sigla: map['sigla']?? '',
       titulo: map['titulo'] ?? 'Prof.',
       email: map['email'] ?? '',
       telefone: map['telefone'] ?? '',
@@ -37,6 +40,7 @@ class DocenteModel {
   Map<String, dynamic> toMap() {
     return {
       'nome': nome,
+      'sigla':sigla,
       'titulo': titulo,
       'email': email,
       'telefone': telefone,
@@ -50,6 +54,7 @@ class DocenteModel {
   DocenteModel copyWith({
     String? id,
     String? nome,
+    String? sigla,
     String? titulo,
     String? email,
     String? telefone,
@@ -60,6 +65,7 @@ class DocenteModel {
     return DocenteModel(
       id: id ?? this.id,
       nome: nome ?? this.nome,
+      sigla: sigla ?? this.sigla,
       titulo: titulo ?? this.titulo,
       email: email ?? this.email,
       telefone: telefone ?? this.telefone,

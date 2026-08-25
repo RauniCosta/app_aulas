@@ -1,7 +1,7 @@
 // Ficheiro: lib/features/admin_web/manage_courses/providers/curso_providers.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:portaldocente/data/models/turma_model.dart';
+import 'package:edusync/data/models/turma_model.dart';
 import '../../../../data/repositories/curso_repository.dart';
 import '../../../../data/models/curso_model.dart';
 import '../../../../data/models/unidade_curricular_model.dart';

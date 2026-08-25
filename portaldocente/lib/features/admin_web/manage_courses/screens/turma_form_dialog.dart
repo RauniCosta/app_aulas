@@ -5,8 +5,9 @@ import '../../../../data/models/turma_model.dart';
 
 class TurmaFormDialog extends StatefulWidget {
   final String cursoId;
+  final TurmaModel? turmaExistente; // NOVO: Permite receber os dados para edição
 
-  const TurmaFormDialog({Key? key, required this.cursoId}) : super(key: key);
+  const TurmaFormDialog({Key? key, required this.cursoId, this.turmaExistente}) : super(key: key);
 
   @override
   State<TurmaFormDialog> createState() => _TurmaFormDialogState();
@@ -14,10 +15,23 @@ class TurmaFormDialog extends StatefulWidget {
 
 class _TurmaFormDialogState extends State<TurmaFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
+  late TextEditingController _nomeController;
   String _periodoSelecionado = 'Manhã';
   DateTime? _dataInicio;
   DateTime? _dataFim;
+
+  @override
+  void initState() {
+    super.initState();
+    // Preenche com os dados da turma se for uma edição
+    _nomeController = TextEditingController(text: widget.turmaExistente?.nome ?? '');
+    
+    if (widget.turmaExistente != null) {
+      _periodoSelecionado = widget.turmaExistente!.periodo;
+      _dataInicio = widget.turmaExistente!.dataInicio;
+      _dataFim = widget.turmaExistente!.dataFim;
+    }
+  }
 
   @override
   void dispose() {
@@ -28,7 +42,7 @@ class _TurmaFormDialogState extends State<TurmaFormDialog> {
   Future<void> _selecionarData(BuildContext context, bool isInicio) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: isInicio ? (_dataInicio ?? DateTime.now()) : (_dataFim ?? DateTime.now()),
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
     );
@@ -46,7 +60,7 @@ class _TurmaFormDialogState extends State<TurmaFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nova Turma'),
+      title: Text(widget.turmaExistente == null ? 'Nova Turma' : 'Editar Turma'),
       content: SizedBox(
         width: 450,
         child: Form(
@@ -58,7 +72,7 @@ class _TurmaFormDialogState extends State<TurmaFormDialog> {
                 controller: _nomeController,
                 decoration: const InputDecoration(
                   labelText: 'Identificador/Nome da Turma',
-                  hintText: 'Ex: Turma A, Turma 2026/1',
+                  hintText: 'Ex: Turma A, 2026/1',
                   prefixIcon: Icon(Icons.group),
                   border: OutlineInputBorder(),
                 ),
@@ -128,8 +142,9 @@ class _TurmaFormDialogState extends State<TurmaFormDialog> {
                 return;
               }
 
-              final novaTurma = TurmaModel(
-                id: '',
+              // Se for edição, mantém o ID original. Se for nova, envia vazio.
+              final turmaPronta = TurmaModel(
+                id: widget.turmaExistente?.id ?? '', 
                 cursoId: widget.cursoId,
                 nome: _nomeController.text.trim(),
                 dataInicio: _dataInicio!,
@@ -137,10 +152,10 @@ class _TurmaFormDialogState extends State<TurmaFormDialog> {
                 periodo: _periodoSelecionado,
               );
 
-              Navigator.pop(context, novaTurma);
+              Navigator.pop(context, turmaPronta);
             }
           },
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E8B57)),
           child: const Text('Salvar Turma'),
         ),
       ],

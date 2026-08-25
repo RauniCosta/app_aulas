@@ -3,9 +3,9 @@
 class EscalaModel {
   final String id;
   final String idCurso;
-  final String turma; // NOVO: Identificador da turma (ex: "Turma A", "Turma 2026/1")
+  final String turma;
   final String nomeUnidadeCurricular;
-  final List<String> idDocentes;
+  final List<String> idDocentes; // Lista correta de docentes
   final String diaDaSemana;
   final String blocoTurno;
   final String sala;
@@ -14,13 +14,14 @@ class EscalaModel {
   EscalaModel({
     required this.id,
     required this.idCurso,
-    this.turma = 'Turma A', // Valor padrão
+    this.turma = 'Turma A', 
     required this.nomeUnidadeCurricular,
     required this.idDocentes,
     required this.diaDaSemana,
     required this.blocoTurno,
     this.sala = 'A Definir',
     this.confirmada = false,
+    // APAGAR idDocente, data, horaInicio, horaFim daqui
   });
 
   factory EscalaModel.fromMap(Map<String, dynamic> map, String documentId) {
@@ -34,6 +35,7 @@ class EscalaModel {
       blocoTurno: map['blocoTurno'] ?? '',
       sala: map['sala'] ?? 'A Definir',
       confirmada: map['confirmada'] ?? false,
+      // APAGAR data, horaInicio, horaFim daqui também
     );
   }
 

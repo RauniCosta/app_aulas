@@ -29,7 +29,7 @@ class BibliotecaApp extends StatelessWidget {
     return MaterialApp(
       title: 'comunityLer',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: const Color(0xFFA4A791),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       initialRoute: '/splash',

@@ -3,7 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart'; // NOVO
-import 'package:portaldocente/core/routing/auth_gate.dart';
+import 'package:edusync/core/routing/auth_gate.dart';
+import 'package:edusync/core/theme/app_theme.dart';
 import 'firebase_options.dart'; // NOVO - Ficheiro gerado no Passo 3
 
 
@@ -19,25 +20,21 @@ void main() async {
   runApp(
     // O Riverpod continua a envolver a app
     const ProviderScope(
-      child: EducaLinkApp(),
+      child: EduSync(),
     ),
   );
 }
 
-class EducaLinkApp extends StatelessWidget {
-  const EducaLinkApp({Key? key}) : super(key: key);
+class EduSync extends StatelessWidget {
+  const EduSync({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EducaLink',
+      title: 'EduSync', // Novo nome do projeto!
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFF3B68A8),
-        fontFamily: 'Roboto',
-      ),
-      // O AuthGate é o widget que decide qual tela mostrar com base no estado de autenticação
-      home: const AuthGate(), 
+      theme: AppTheme.lightTheme, // APLICA O TEMA GLOBAL AQUI!
+      home: const AuthGate(),
     );
   }
 }

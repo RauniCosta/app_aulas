@@ -25,8 +25,14 @@ class ManageTeachersScreen extends ConsumerWidget {
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Gestão de Docentes', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                  Text('Cadastre e gira o corpo docente da instituição', style: TextStyle(color: Colors.grey)),
+                  Text(
+                    'Gestão de Docentes',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Cadastre e gira o corpo docente da instituição',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ],
               ),
               ElevatedButton.icon(
@@ -35,7 +41,7 @@ class ManageTeachersScreen extends ConsumerWidget {
                     context: context,
                     builder: (context) => const DocenteFormDialog(),
                   );
-                  
+
                   if (resultado != null) {
                     try {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -45,6 +51,7 @@ class ManageTeachersScreen extends ConsumerWidget {
                       final novoDocente = DocenteModel(
                         id: '',
                         nome: resultado['nome'],
+                        sigla: resultado['sigla'], // NOVO: Passando a sigla
                         titulo: 'Prof.',
                         email: resultado['email'],
                         diasEscala: List<String>.from(resultado['diasEscala'] ?? []),
@@ -52,15 +59,23 @@ class ManageTeachersScreen extends ConsumerWidget {
 
                       const String senhaProvisoria = '123456';
 
-                      await ref.read(docenteRepositoryProvider).addDocente(novoDocente, senhaProvisoria);
+                      await ref
+                          .read(docenteRepositoryProvider)
+                          .addDocente(novoDocente, senhaProvisoria);
                       ref.invalidate(docentesListProvider);
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Docente criado com sucesso! ✅'), backgroundColor: Colors.green),
+                        const SnackBar(
+                          content: Text('Docente criado com sucesso! ✅'),
+                          backgroundColor: Colors.green,
+                        ),
                       );
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red),
+                        SnackBar(
+                          content: Text('Erro: $e'),
+                          backgroundColor: Colors.red,
+                        ),
                       );
                     }
                   }
@@ -68,8 +83,11 @@ class ManageTeachersScreen extends ConsumerWidget {
                 icon: const Icon(Icons.add),
                 label: const Text('Novo Docente'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E5BB2),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  backgroundColor: const Color(0xFF2E8B57),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
                 ),
               ),
             ],
@@ -79,15 +97,21 @@ class ManageTeachersScreen extends ConsumerWidget {
           Expanded(
             child: Card(
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: docentesAsyncValue.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text('Erro ao carregar docentes: $err')),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) =>
+                      Center(child: Text('Erro ao carregar docentes: $err')),
                   data: (docentes) {
                     if (docentes.isEmpty) {
-                      return const Center(child: Text('Nenhum docente cadastrado ainda.'));
+                      return const Center(
+                        child: Text('Nenhum docente cadastrado ainda.'),
+                      );
                     }
                     return SingleChildScrollView(
                       scrollDirection: Axis.vertical,
@@ -95,27 +119,65 @@ class ManageTeachersScreen extends ConsumerWidget {
                         width: double.infinity,
                         child: DataTable(
                           columns: const [
-                            DataColumn(label: Text('Nome', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('E-mail', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('Dias de Atuação', style: TextStyle(fontWeight: FontWeight.bold))),
-                            DataColumn(label: Text('Ações', style: TextStyle(fontWeight: FontWeight.bold))),
+                            DataColumn(
+                              label: Text(
+                                'Nome',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'E-mail',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'Dias de Atuação',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'Ações',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ],
                           rows: docentes.map((docente) {
                             return DataRow(
+                              // Adicionar esta linha faz a tabela reagir ao mouse na Web!
+                              onSelectChanged: (bool? selected) {},
                               cells: [
-                                DataCell(Text(docente.nome)),
+                                // NOVO: Exibe a sigla ao lado do nome na tabela!
+                                DataCell(Text('${docente.nome} (${docente.sigla})')),
                                 DataCell(Text(docente.email)),
                                 DataCell(
                                   docente.diasEscala.isEmpty
-                                      ? const Text('Não definido', style: TextStyle(color: Colors.grey, fontSize: 12))
+                                      ? const Text(
+                                          'Não definido',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                          ),
+                                        )
                                       : Wrap(
                                           spacing: 4,
                                           children: docente.diasEscala.map((d) {
-                                            final sigla = d.split('-')[0].substring(0, 3);
+                                            final sigla = d
+                                                .split('-')[0]
+                                                .substring(0, 3);
                                             return Chip(
-                                              label: Text(sigla, style: const TextStyle(fontSize: 10)),
+                                              label: Text(
+                                                sigla,
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                ),
+                                              ),
                                               padding: EdgeInsets.zero,
-                                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
                                             );
                                           }).toList(),
                                         ),
@@ -124,41 +186,77 @@ class ManageTeachersScreen extends ConsumerWidget {
                                   Row(
                                     children: [
                                       IconButton(
-                                        icon: const Icon(Icons.edit, color: Colors.blue),
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.blue,
+                                        ),
                                         onPressed: () async {
-                                          final resultado = await showDialog<Map<String, dynamic>>(
-                                            context: context,
-                                            builder: (context) => DocenteFormDialog(docenteExistente: docente),
-                                          );
+                                          final resultado =
+                                              await showDialog<
+                                                Map<String, dynamic>
+                                              >(
+                                                context: context,
+                                                builder: (context) =>
+                                                    DocenteFormDialog(
+                                                      docenteExistente: docente,
+                                                    ),
+                                              );
                                           if (resultado != null) {
                                             final atualizado = DocenteModel(
                                               id: docente.id,
                                               nome: resultado['nome'],
+                                              sigla: resultado['sigla'], // NOVO: Atualizando a sigla
                                               email: resultado['email'],
                                               diasEscala: List<String>.from(resultado['diasEscala'] ?? []),
                                             );
                                             await ref.read(docenteRepositoryProvider).updateDocente(atualizado);
-                                            ref.invalidate(docentesListProvider);
+                                            ref.invalidate(
+                                              docentesListProvider,
+                                            );
                                           }
                                         },
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
                                         onPressed: () async {
                                           final confirmar = await showDialog<bool>(
                                             context: context,
                                             builder: (ctx) => AlertDialog(
-                                              title: const Text('Excluir Docente?'),
-                                              content: Text('Deseja excluir o professor ${docente.nome}?'),
+                                              title: const Text(
+                                                'Excluir Docente?',
+                                              ),
+                                              content: Text(
+                                                'Deseja excluir o professor ${docente.nome}?',
+                                              ),
                                               actions: [
-                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Excluir', style: TextStyle(color: Colors.red))),
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(ctx, false),
+                                                  child: const Text('Cancelar'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(ctx, true),
+                                                  child: const Text(
+                                                    'Excluir',
+                                                    style: TextStyle(
+                                                      color: Colors.red,
+                                                    ),
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           );
                                           if (confirmar == true) {
-                                            await ref.read(docenteRepositoryProvider).deleteDocente(docente.id);
-                                            ref.invalidate(docentesListProvider);
+                                            await ref
+                                                .read(docenteRepositoryProvider)
+                                                .deleteDocente(docente.id);
+                                            ref.invalidate(
+                                              docentesListProvider,
+                                            );
                                           }
                                         },
                                       ),

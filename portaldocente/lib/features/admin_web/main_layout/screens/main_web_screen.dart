@@ -16,10 +16,10 @@ class MainWebScreen extends ConsumerWidget {
   const MainWebScreen({Key? key}) : super(key: key);
 
   static const List<Widget> _telas = [
-    AdminDashboardScreen(),       // Índice 0: Nova Visão Geral
-    ManageTeachersScreen(),       // Índice 1
-    ManageCoursesScreen(),        // Índice 2
-    ScaleBuilderScreen(),         // Índice 3
+    AdminDashboardScreen(), // Índice 0: Nova Visão Geral
+    ManageTeachersScreen(), // Índice 1
+    ManageCoursesScreen(), // Índice 2
+    ScaleBuilderScreen(), // Índice 3
   ];
 
   @override
@@ -32,24 +32,52 @@ class MainWebScreen extends ConsumerWidget {
         children: [
           Container(
             width: 250,
-            color: const Color(0xFF1E5BB2),
+            color: const Color(0xFF2E8B57),
             child: Column(
               children: [
                 const Padding(
                   padding: EdgeInsets.all(30.0),
-                  child: Text('EducaLink Admin', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'EducaLink Admin',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 // --- MENU ATUALIZADO AQUI ---
-                _buildMenuItem(ref, Icons.dashboard, 'Visão Geral', 0, currentIndex),
+                _buildMenuItem(
+                  ref,
+                  Icons.dashboard,
+                  'Visão Geral',
+                  0,
+                  currentIndex,
+                ),
                 _buildMenuItem(ref, Icons.people, 'Docentes', 1, currentIndex),
-                _buildMenuItem(ref, Icons.menu_book, 'Cursos e UCs', 2, currentIndex),
-                _buildMenuItem(ref, Icons.calendar_month, 'Montar Escala', 3, currentIndex),
-                
+                _buildMenuItem(
+                  ref,
+                  Icons.menu_book,
+                  'Cursos e UCs',
+                  2,
+                  currentIndex,
+                ),
+                _buildMenuItem(
+                  ref,
+                  Icons.calendar_month,
+                  'Montar Escala',
+                  3,
+                  currentIndex,
+                ),
+
                 const Spacer(),
-                
+
                 ListTile(
                   leading: const Icon(Icons.exit_to_app, color: Colors.white70),
-                  title: const Text('Terminar Sessão', style: TextStyle(color: Colors.white70)),
+                  title: const Text(
+                    'Terminar Sessão',
+                    style: TextStyle(color: Colors.white70),
+                  ),
                   onTap: () async {
                     await FirebaseAuth.instance.signOut();
                   },
@@ -60,10 +88,28 @@ class MainWebScreen extends ConsumerWidget {
           ),
 
           // --- CONTEÚDO DINÂMICO (Troca de tela aqui) ---
+          // CONTEÚDO DINÂMICO (Com animação de Fade-in)
           Expanded(
-            child: IndexedStack(
-              index: currentIndex,
-              children: _telas,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                // Cria uma transição de opacidade e leve deslizamento
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.02, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              // O AnimatedSwitcher precisa saber que a tela mudou. Usamos o Key!
+              child: KeyedSubtree(
+                key: ValueKey<int>(currentIndex),
+                child: _telas[currentIndex],
+              ),
             ),
           ),
         ],
@@ -72,16 +118,25 @@ class MainWebScreen extends ConsumerWidget {
   }
 
   // Widget auxiliar para os botões do menu
-  Widget _buildMenuItem(WidgetRef ref, IconData icon, String title, int index, int currentIndex) {
+  Widget _buildMenuItem(
+    WidgetRef ref,
+    IconData icon,
+    String title,
+    int index,
+    int currentIndex,
+  ) {
     final isSelected = currentIndex == index;
     return Container(
       color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
       child: ListTile(
         leading: Icon(icon, color: isSelected ? Colors.white : Colors.white70),
-        title: Text(title, style: TextStyle(
-          color: isSelected ? Colors.white : Colors.white70, 
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
-        )),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white70,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
         onTap: () {
           // Atualiza o índice e troca a tela instantaneamente!
           ref.read(adminMenuIndexProvider.notifier).state = index;

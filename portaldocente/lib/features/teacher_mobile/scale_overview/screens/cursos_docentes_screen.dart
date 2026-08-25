@@ -6,6 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../agenda/providers/agenda_providers.dart';
 import '../../../../data/models/escala_model.dart';
 
+// NOVO: Imports para traduzir os Cursos
+import '../../../../data/models/curso_model.dart';
+import '../../../admin_web/manage_courses/providers/curso_providers.dart';
+
 class CursosDocentesScreen extends ConsumerWidget {
   const CursosDocentesScreen({Key? key}) : super(key: key);
 
@@ -13,6 +17,21 @@ class CursosDocentesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Buscamos todas as escalas atribuídas a este professor
     final agendaAsync = ref.watch(agendaDoProfessorProvider);
+    
+    // Lê a lista de cursos silenciosamente e de forma segura
+    final cursosAsync = ref.watch(cursosListProvider);
+    final listaCursos = cursosAsync.maybeWhen(
+      data: (cursos) => cursos,
+      orElse: () => <CursoModel>[],
+    );
+
+    // Função tradutora
+    String obterNomeCurso(String idCurso) {
+      for (final curso in listaCursos) {
+        if (curso.id == idCurso) return curso.nome;
+      }
+      return idCurso; 
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -21,7 +40,7 @@ class CursosDocentesScreen extends ConsumerWidget {
           'Minhas Turmas e UCs', 
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        backgroundColor: const Color(0xFF1E5BB2),
+        backgroundColor: const Color(0xFF2E8B57),
         elevation: 0,
         centerTitle: true,
       ),
@@ -33,9 +52,7 @@ class CursosDocentesScreen extends ConsumerWidget {
             return _buildEmptyState();
           }
 
-          // 🧠 LÓGICA DE AGRUPAMENTO:
-          // Um professor pode dar aula 3x na mesma turma. Não queremos 3 cards iguais.
-          // Vamos agrupar as escalas pela chave "Curso + Turma".
+          // Agrupa as escalas pela chave "Curso + Turma".
           final Map<String, List<EscalaModel>> turmasAgrupadas = {};
           
           for (var escala in escalas) {
@@ -52,19 +69,19 @@ class CursosDocentesScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(20),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2, // Grid com 2 colunas
-              crossAxisSpacing: 16, // Espaço horizontal entre cards
-              mainAxisSpacing: 16,  // Espaço vertical entre cards
-              childAspectRatio: 0.78, // Proporção do card (mais altinho)
+              crossAxisSpacing: 16, 
+              mainAxisSpacing: 16,  
+              childAspectRatio: 0.78, 
             ),
             itemCount: chavesUnicas.length,
             itemBuilder: (context, index) {
               final chave = chavesUnicas[index];
               final escalasDaTurma = turmasAgrupadas[chave]!;
               
-              final cursoNome = escalasDaTurma.first.idCurso;
+              // AQUI ESTÁ A CORREÇÃO: Traduz o ID para o nome real
+              final cursoNome = obterNomeCurso(escalasDaTurma.first.idCurso);
               final turmaNome = escalasDaTurma.first.turma;
               
-              // Pegamos as UCs únicas que ele ensina nessa turma específica
               final ucsUnicas = escalasDaTurma.map((e) => e.nomeUnidadeCurricular).toSet().toList();
 
               return _buildCourseCard(context, cursoNome, turmaNome, ucsUnicas);
@@ -75,7 +92,7 @@ class CursosDocentesScreen extends ConsumerWidget {
     );
   }
 
-  // --- WIDGET DO CARD DA TURMA (VISUAL REALISTA) ---
+  // --- WIDGET DO CARD DA TURMA ---
   Widget _buildCourseCard(BuildContext context, String curso, String turma, List<String> ucs) {
     return Container(
       decoration: BoxDecoration(
@@ -92,7 +109,7 @@ class CursosDocentesScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cabeçalho do Card (Azul Claro com Ícone)
+          // Cabeçalho do Card
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             decoration: BoxDecoration(
@@ -101,12 +118,12 @@ class CursosDocentesScreen extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.school, color: Color(0xFF1E5BB2), size: 18),
+                const Icon(Icons.school, color: Color(0xFF2E8B57), size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    turma, // Ex: "Turma 2026/1"
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E5BB2), fontSize: 13),
+                    turma, 
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E8B57), fontSize: 13),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -122,14 +139,13 @@ class CursosDocentesScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  curso, // Ex: "Técnico em Desenvolvimento de Sistemas"
+                  curso, // Agora ele receberá o Nome do Curso traduzido!
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, height: 1.2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 12),
                 
-                // Etiqueta de UCs
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -144,7 +160,6 @@ class CursosDocentesScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
 
-                // Lista sutil das UCs (Mostra até 2 para não quebrar o layout)
                 ...ucs.take(2).map((uc) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(

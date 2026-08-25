@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:portaldocente/features/admin_web/main_layout/screens/main_web_screen.dart';
+import 'package:edusync/features/admin_web/main_layout/screens/main_web_screen.dart';
 
 import '../../features/auth/providers/auth_providers.dart';
 import '../../features/auth/screens/login_screen.dart';

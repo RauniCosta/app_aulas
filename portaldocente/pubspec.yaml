@@ -1,5 +1,5 @@
-name: portaldocente
-description: "A new Flutter project."
+name: edusync
+description: "Sistema de Gestão Docente e Escalas"
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -17,7 +17,7 @@ dependencies:
   firebase_core: ^4.13.0
   cloud_firestore: ^6.8.0
   firebase_auth: ^6.5.7
-  #file_picker: ^8.1.4 # Navegação nos diretorios do dispositivos
+  file_picker: ^8.1.4 # Navegação nos diretorios do dispositivos
   csv: ^6.0.0
 
 dev_dependencies:

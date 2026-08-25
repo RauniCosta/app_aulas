@@ -17,17 +17,13 @@ class _DocenteFormDialogState extends State<DocenteFormDialog> {
   
   late TextEditingController _nomeController;
   late TextEditingController _emailController;
+  late TextEditingController _siglaController; // NOVO: Controlador da Sigla
   
-  // NOVO: Conjunto de dias selecionados
   final Set<String> _diasSelecionados = {};
 
   final List<String> _todosOsDias = [
-    'Segunda-feira',
-    'Terça-feira',
-    'Quarta-feira',
-    'Quinta-feira',
-    'Sexta-feira',
-    'Sábado',
+    'Segunda-feira', 'Terça-feira', 'Quarta-feira', 
+    'Quinta-feira', 'Sexta-feira', 'Sábado',
   ];
 
   @override
@@ -35,8 +31,8 @@ class _DocenteFormDialogState extends State<DocenteFormDialog> {
     super.initState();
     _nomeController = TextEditingController(text: widget.docenteExistente?.nome ?? '');
     _emailController = TextEditingController(text: widget.docenteExistente?.email ?? '');
+    _siglaController = TextEditingController(text: widget.docenteExistente?.sigla ?? ''); // NOVO
 
-    // Se for edição, carrega os dias que já estavam salvos no Firebase
     if (widget.docenteExistente != null) {
       _diasSelecionados.addAll(widget.docenteExistente!.diasEscala);
     }
@@ -46,6 +42,7 @@ class _DocenteFormDialogState extends State<DocenteFormDialog> {
   void dispose() {
     _nomeController.dispose();
     _emailController.dispose();
+    _siglaController.dispose(); // NOVO
     super.dispose();
   }
 
@@ -72,6 +69,21 @@ class _DocenteFormDialogState extends State<DocenteFormDialog> {
                   validator: (value) => value!.isEmpty ? 'Campo obrigatório' : null,
                 ),
                 const SizedBox(height: 15),
+                
+                // NOVO: Campo da Sigla
+                TextFormField(
+                  controller: _siglaController,
+                  maxLength: 3, // Limita o tamanho na interface
+                  textCapitalization: TextCapitalization.characters, // Força maiúsculas
+                  decoration: const InputDecoration(
+                    labelText: 'Sigla (Ex: RS)',
+                    prefixIcon: Icon(Icons.short_text),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value!.isEmpty ? 'Campo obrigatório' : null,
+                ),
+                const SizedBox(height: 15),
+                
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -83,14 +95,9 @@ class _DocenteFormDialogState extends State<DocenteFormDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                // SEÇÃO DE SELEÇÃO DOS DIAS
-                const Text(
-                  'Dias de Atuação na Escala:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
+                const Text('Dias de Atuação na Escala:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 10),
 
-                // Wrap com Filtros estilo "Chips" clicáveis
                 Wrap(
                   spacing: 8.0,
                   runSpacing: 8.0,
@@ -99,15 +106,12 @@ class _DocenteFormDialogState extends State<DocenteFormDialog> {
                     return FilterChip(
                       label: Text(dia),
                       selected: isSelected,
-                      selectedColor: const Color(0xFF1E5BB2).withOpacity(0.2),
-                      checkmarkColor: const Color(0xFF1E5BB2),
+                      selectedColor: const Color(0xFF2E8B57).withOpacity(0.2),
+                      checkmarkColor: const Color(0xFF2E8B57),
                       onSelected: (bool selected) {
                         setState(() {
-                          if (selected) {
-                            _diasSelecionados.add(dia);
-                          } else {
-                            _diasSelecionados.remove(dia);
-                          }
+                          if (selected) _diasSelecionados.add(dia);
+                          else _diasSelecionados.remove(dia);
                         });
                       },
                     );
@@ -129,12 +133,13 @@ class _DocenteFormDialogState extends State<DocenteFormDialog> {
               final dadosFormulario = {
                 'nome': _nomeController.text,
                 'email': _emailController.text,
-                'diasEscala': _diasSelecionados.toList(), // NOVO: Retorna os dias
+                'sigla': _siglaController.text.toUpperCase(), // NOVO: Garante envio em maiúsculas
+                'diasEscala': _diasSelecionados.toList(),
               };
               Navigator.of(context).pop(dadosFormulario); 
             }
           },
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E8B57)),
           child: const Text('Salvar'),
         ),
       ],

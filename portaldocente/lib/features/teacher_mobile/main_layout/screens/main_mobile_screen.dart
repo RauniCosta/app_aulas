@@ -35,10 +35,6 @@ class MainMobileScreen extends ConsumerWidget {
 
       // 3. O Menu Inferior
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Necessário quando há 4 itens
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF1E5BB2),
-        unselectedItemColor: Colors.grey,
         currentIndex: currentIndex,
         onTap: (index) {
           // Atualiza o provider, trocando a tela instantaneamente

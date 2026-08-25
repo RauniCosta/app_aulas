@@ -1,14 +1,13 @@
 // Ficheiro: lib/features/admin_web/manage_courses/screens/uc_form_dialog.dart
 
 import 'package:flutter/material.dart';
-import 'package:portaldocente/data/models/unidade_curricular_model.dart';
+import '../../../../data/models/unidade_curricular_model.dart';
 
 class UCFormDialog extends StatefulWidget {
   final String cursoId;
-  final UnidadeCurricularModel?
-  ucExistente; // NOVO: Permite receber uma UC para edição
+  final UnidadeCurricularModel? ucExistente;
 
-  const UCFormDialog({super.key, required this.cursoId, this.ucExistente});
+  const UCFormDialog({Key? key, required this.cursoId, this.ucExistente}) : super(key: key);
 
   @override
   State<UCFormDialog> createState() => _UCFormDialogState();
@@ -17,25 +16,23 @@ class UCFormDialog extends StatefulWidget {
 class _UCFormDialogState extends State<UCFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nomeController;
+  late TextEditingController _siglaController; // NOVO CONTROLLER
   late TextEditingController _cargaHorariaController;
 
   @override
   void initState() {
     super.initState();
-    // Preenche com os dados existentes se for uma edição
-    _nomeController = TextEditingController(
-      text: widget.ucExistente?.nome ?? '',
-    );
+    _nomeController = TextEditingController(text: widget.ucExistente?.nome ?? '');
+    _siglaController = TextEditingController(text: widget.ucExistente?.sigla ?? ''); // NOVO
     _cargaHorariaController = TextEditingController(
-      text: widget.ucExistente != null
-          ? widget.ucExistente!.cargaHoraria.toString()
-          : '',
+      text: widget.ucExistente != null ? widget.ucExistente!.cargaHoraria.toString() : ''
     );
   }
 
   @override
   void dispose() {
     _nomeController.dispose();
+    _siglaController.dispose(); // NOVO
     _cargaHorariaController.dispose();
     super.dispose();
   }
@@ -43,11 +40,7 @@ class _UCFormDialogState extends State<UCFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(
-        widget.ucExistente == null
-            ? 'Nova Unidade Curricular'
-            : 'Editar Unidade Curricular',
-      ),
+      title: Text(widget.ucExistente == null ? 'Nova Unidade Curricular' : 'Editar Unidade Curricular'),
       content: SizedBox(
         width: 400,
         child: Form(
@@ -62,10 +55,24 @@ class _UCFormDialogState extends State<UCFormDialog> {
                   prefixIcon: Icon(Icons.book),
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Campo obrigatório' : null,
+                validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 15),
+
+              // NOVO: CAMPO DA SIGLA DA UC
+              TextFormField(
+                controller: _siglaController,
+                maxLength: 4, 
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'Sigla (Ex: BD1, LOG)',
+                  prefixIcon: Icon(Icons.short_text),
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => value!.isEmpty ? 'Campo obrigatório' : null,
+              ),
+              const SizedBox(height: 15),
+
               TextFormField(
                 controller: _cargaHorariaController,
                 decoration: const InputDecoration(
@@ -92,20 +99,18 @@ class _UCFormDialogState extends State<UCFormDialog> {
         ElevatedButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
-              final  ucPronta = UnidadeCurricularModel(
-                id: widget.ucExistente?.id ?? '',
+              final ucPronta = UnidadeCurricularModel(
+                id: widget.ucExistente?.id ?? '', 
                 cursoId: widget.cursoId,
                 nome: _nomeController.text.trim(),
+                sigla: _siglaController.text.trim().toUpperCase(), // SALVANDO A SIGLA
                 cargaHoraria: int.parse(_cargaHorariaController.text.trim()),
-                // CORREÇÃO: Passar String vazia em vez de null
-                moduloOuSemestre: "Modulo 1",
+                moduloOuSemestre: widget.ucExistente?.moduloOuSemestre ?? 'Módulo 1',
               );
               Navigator.pop(context, ucPronta);
             }
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1E5BB2),
-          ),
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E8B57)),
           child: const Text('Salvar UC'),
         ),
       ],

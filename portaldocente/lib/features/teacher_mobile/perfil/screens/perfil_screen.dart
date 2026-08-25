@@ -42,7 +42,7 @@ class PerfilScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E5BB2),
+        backgroundColor: const Color(0xFF2E8B57),
         elevation: 0,
         title: const Text('Meu Perfil', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -61,8 +61,8 @@ class PerfilScreen extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 45,
-                      backgroundColor: const Color(0xFF1E5BB2).withOpacity(0.1),
-                      child: const Icon(Icons.person, size: 50, color: Color(0xFF1E5BB2)),
+                      backgroundColor: const Color(0xFF2E8B57).withOpacity(0.1),
+                      child: const Icon(Icons.person, size: 50, color: Color(0xFF2E8B57)),
                     ),
                     const SizedBox(height: 15),
                     
@@ -92,12 +92,12 @@ class PerfilScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E5BB2).withOpacity(0.1),
+                        color: const Color(0xFF2E8B57).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
                         'Corpo Docente',
-                        style: TextStyle(color: Color(0xFF1E5BB2), fontWeight: FontWeight.bold, fontSize: 12),
+                        style: TextStyle(color: Color(0xFF2E8B57), fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ),
                   ],
@@ -117,7 +117,7 @@ class PerfilScreen extends ConsumerWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.calendar_month, color: Color(0xFF1E5BB2)),
+                        Icon(Icons.calendar_month, color: Color(0xFF2E8B57)),
                         SizedBox(width: 10),
                         Text(
                           'Dias de Atuação Cadastrados',
@@ -168,7 +168,7 @@ class PerfilScreen extends ConsumerWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.assignment_ind, color: Color(0xFF1E5BB2)),
+                        Icon(Icons.assignment_ind, color: Color(0xFF2E8B57)),
                         SizedBox(width: 10),
                         Text(
                           'Resumo da Escala Atual',
@@ -213,7 +213,7 @@ class PerfilScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.symmetric(vertical: 4),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.arrow_right, color: Color(0xFF1E5BB2)),
+                                    const Icon(Icons.arrow_right, color: Color(0xFF2E8B57)),
                                     Expanded(
                                       child: Text(
                                         '${escala.nomeUnidadeCurricular} (${escala.idCurso}) - ${escala.diaDaSemana}',
@@ -265,9 +265,9 @@ class PerfilScreen extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 18, color: const Color(0xFF1E5BB2)),
+            Icon(icon, size: 18, color: const Color(0xFF2E8B57)),
             const SizedBox(width: 5),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E5BB2))),
+            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2E8B57))),
           ],
         ),
         const SizedBox(height: 2),

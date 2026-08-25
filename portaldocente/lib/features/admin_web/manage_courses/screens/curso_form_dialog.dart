@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../../data/models/curso_model.dart';
 
 class CursoFormDialog extends StatefulWidget {
-  final CursoModel? cursoExistente; // Permite usar o mesmo modal para Criar e Editar
+  final CursoModel?
+  cursoExistente; // Permite usar o mesmo modal para Criar e Editar
 
   const CursoFormDialog({Key? key, this.cursoExistente}) : super(key: key);
 
@@ -14,8 +15,9 @@ class CursoFormDialog extends StatefulWidget {
 
 class _CursoFormDialogState extends State<CursoFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _nomeController;
+  late TextEditingController _siglaController;
   late TextEditingController _cargaHorariaController;
   String _modalidadeSelecionada = 'Habilitação Técnica'; // Valor por defeito
 
@@ -24,19 +26,28 @@ class _CursoFormDialogState extends State<CursoFormDialog> {
     'Habilitação Técnica',
     'Aperfeiçoamento',
     'Qualificação Profissional',
-    'Cursos Livres'
+    'Cursos Livres',
   ];
 
   @override
   void initState() {
     super.initState();
     // Preenche os dados se for uma edição
-    _nomeController = TextEditingController(text: widget.cursoExistente?.nome ?? '');
-    _cargaHorariaController = TextEditingController(
-      text: widget.cursoExistente != null ? widget.cursoExistente!.cargaHorariaTotal.toString() : ''
+    _nomeController = TextEditingController(
+      text: widget.cursoExistente?.nome ?? '',
     );
-    
-    if (widget.cursoExistente != null && _modalidades.contains(widget.cursoExistente!.modalidade)) {
+    // CORREÇÃO: Faltava inicializar a sigla aqui!
+    _siglaController = TextEditingController(text: widget.cursoExistente?.sigla ?? '');
+
+    // Exemplo para o Curso (adapte para a UC usando widget.ucExistente)
+    _cargaHorariaController = TextEditingController(
+      text: widget.cursoExistente != null
+          ? widget.cursoExistente!.cargaHorariaTotal.toString()
+          : '',
+    );
+
+    if (widget.cursoExistente != null &&
+        _modalidades.contains(widget.cursoExistente!.modalidade)) {
       _modalidadeSelecionada = widget.cursoExistente!.modalidade;
     }
   }
@@ -44,6 +55,7 @@ class _CursoFormDialogState extends State<CursoFormDialog> {
   @override
   void dispose() {
     _nomeController.dispose();
+    _siglaController.dispose();
     _cargaHorariaController.dispose();
     super.dispose();
   }
@@ -51,7 +63,9 @@ class _CursoFormDialogState extends State<CursoFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.cursoExistente == null ? 'Novo Curso' : 'Editar Curso'),
+      title: Text(
+        widget.cursoExistente == null ? 'Novo Curso' : 'Editar Curso',
+      ),
       content: SizedBox(
         width: 450,
         child: Form(
@@ -66,7 +80,23 @@ class _CursoFormDialogState extends State<CursoFormDialog> {
                   prefixIcon: Icon(Icons.school),
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Campo obrigatório' : null,
+              ),
+              const SizedBox(height: 15),
+              TextFormField(
+                controller: _siglaController,
+                maxLength:
+                    4, // Permite siglas como "TDS" (Tec. Desenv. Sistemas)
+                textCapitalization:
+                    TextCapitalization.characters, // Força as letras maiúsculas
+                decoration: const InputDecoration(
+                  labelText: 'Sigla',
+                  prefixIcon: Icon(Icons.short_text),
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value!.isEmpty ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 15),
               Row(
@@ -101,7 +131,8 @@ class _CursoFormDialogState extends State<CursoFormDialog> {
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Obrigatório';
+                        if (value == null || value.isEmpty)
+                          return 'Obrigatório';
                         if (int.tryParse(value) == null) return 'Inválido';
                         return null;
                       },
@@ -121,19 +152,23 @@ class _CursoFormDialogState extends State<CursoFormDialog> {
         ElevatedButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
-              // Constrói o modelo com os dados preenchidos
               final cursoPronto = CursoModel(
-                id: widget.cursoExistente?.id ?? '', // Vazio se for novo
+                id: widget.cursoExistente?.id ?? '',
                 nome: _nomeController.text.trim(),
+                // CORREÇÃO: Agora capturamos a sigla e forçamos para maiúsculas!
+                sigla: _siglaController.text.trim().toUpperCase(),
                 modalidade: _modalidadeSelecionada,
-                cargaHorariaTotal: int.parse(_cargaHorariaController.text.trim()),
+                cargaHorariaTotal: int.parse(
+                  _cargaHorariaController.text.trim(),
+                ),
                 ativo: true,
               );
-              // Devolve o objeto completo para o ecrã anterior!
               Navigator.of(context).pop(cursoPronto);
             }
           },
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2E8B57),
+          ),
           child: const Text('Salvar'),
         ),
       ],

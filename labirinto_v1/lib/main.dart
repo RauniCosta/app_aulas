@@ -14,7 +14,8 @@ class MeuJogoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Tira a faixa de "debug" do canto da tela
+      debugShowCheckedModeBanner:
+          false, // Tira a faixa de "debug" do canto da tela
       title: 'Corrida de Labirintos',
       // Scaffold é a "estrutura" básica de uma tela (tela em branco)
       home: TelaDoJogo(),
@@ -31,52 +32,6 @@ class TelaDoJogo extends StatefulWidget {
 
 // O "State" guarda as informações que mudam durante o jogo.
 class _TelaDoJogoState extends State<TelaDoJogo> {
-
-  // Nova função para calcular e validar o movimento (Coloque dentro de _TelaDoJogoState)
-  void moverPersonagem(DragUpdateDetails detalhes) {
-    int movimentoX = 0;
-    int movimentoY = 0;
-
-    // Lógica para descobrir se o deslize foi na horizontal ou vertical
-    if (detalhes.delta.dx.abs() > detalhes.delta.dy.abs()) {
-      // Horizontal: Direita (+1) ou Esquerda (-1)
-      movimentoX = detalhes.delta.dx > 0 ? 1 : -1;
-    } else {
-      // Vertical: Baixo (+1) ou Cima (-1)
-      movimentoY = detalhes.delta.dy > 0 ? 1 : -1;
-    }
-
-    // Calculamos qual seria a PRÓXIMA posição do personagem
-    int proximoX = posicaoPersonagemX + movimentoX;
-    int proximoY = posicaoPersonagemY + movimentoY;
-
-    // 1. PREVENÇÃO DE ERROS: O personagem não pode sair da tela.
-    if (proximoY >= 0 && proximoY < mapaDoLabirinto.length && 
-        proximoX >= 0 && proximoX < mapaDoLabirinto[0].length) {
-      
-      // 2. LÓGICA DE COLISÃO: Verificamos se a próxima posição NÃO é uma parede (1).
-      if (mapaDoLabirinto[proximoY][proximoX] != 1) { 
-        
-        // O setState é o comando que avisa o Flutter: "Os dados mudaram, redesenhe a tela!"
-        setState(() {
-          posicaoPersonagemX = proximoX;
-          posicaoPersonagemY = proximoY;
-        });
-
-      } else {
-        // 3. FEEDBACK DO SISTEMA: Se for parede, avisamos o jogador!
-        ScaffoldMessenger.of(context).clearSnackBars(); // Limpa avisos antigos
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Ops! Bateu na parede."),
-            duration: Duration(milliseconds: 500), // Some rápido da tela
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
-  }
-  
   // A MATRIZ do labirinto (igual à aula 2).
   final List<List<int>> mapaDoLabirinto = [
     [1, 1, 1, 1, 1, 1, 1],
@@ -99,14 +54,13 @@ class _TelaDoJogoState extends State<TelaDoJogo> {
     return Scaffold(
       backgroundColor: Colors.black87,
       body: Center(
-        
         // 1. GESTURE DETECTOR: O "ouvido" do nosso aplicativo para toques na tela.
         child: GestureDetector(
           // Quando o usuário deslizar, chamamos nossa função de movimento
           onPanUpdate: (detalhesDoToque) {
             moverPersonagem(detalhesDoToque);
           },
-          
+
           child: AspectRatio(
             aspectRatio: totalDeColunas / totalDeLinhas,
             child: GridView.builder(
@@ -118,29 +72,70 @@ class _TelaDoJogoState extends State<TelaDoJogo> {
               itemBuilder: (context, index) {
                 int x = index % totalDeColunas;
                 int y = index ~/ totalDeColunas;
-                
+
                 int valorDoBloco = mapaDoLabirinto[y][x];
-                Color corDoBloco = Colors.white; 
-                
+                Color corDoBloco = Colors.white;
+
                 if (valorDoBloco == 1) corDoBloco = Colors.grey;
                 if (valorDoBloco == 2) corDoBloco = Colors.red;
-                if (valorDoBloco == 3) corDoBloco = Colors.green; 
+                if (valorDoBloco == 3) corDoBloco = Colors.green;
 
-                // 2. DESENHANDO O PERSONAGEM: 
+                // 2. DESENHANDO O PERSONAGEM:
                 // Se a posição atual do bloco (x, y) for igual à posição do nosso personagem...
                 if (x == posicaoPersonagemX && y == posicaoPersonagemY) {
                   corDoBloco = Colors.blue; // ...pintamos esse bloco de azul!
                 }
 
-                return Container(
-                  margin: EdgeInsets.all(1),
-                  color: corDoBloco,
-                );
+                return Container(margin: EdgeInsets.all(1), color: corDoBloco);
               },
             ),
           ),
         ),
       ),
     );
+  }
+
+  // Nova função para calcular e validar o movimento (Coloque dentro de _TelaDoJogoState)
+  void moverPersonagem(DragUpdateDetails detalhes) {
+    int movimentoX = 0;
+    int movimentoY = 0;
+
+    // Lógica para descobrir se o deslize foi na horizontal ou vertical
+    if (detalhes.delta.dx.abs() > detalhes.delta.dy.abs()) {
+      // Horizontal: Direita (+1) ou Esquerda (-1)
+      movimentoX = detalhes.delta.dx > 0 ? 1 : -1;
+    } else {
+      // Vertical: Baixo (+1) ou Cima (-1)
+      movimentoY = detalhes.delta.dy > 0 ? 1 : -1;
+    }
+
+    // Calculamos qual seria a PRÓXIMA posição do personagem
+    int proximoX = posicaoPersonagemX + movimentoX;
+    int proximoY = posicaoPersonagemY + movimentoY;
+
+    // 1. PREVENÇÃO DE ERROS: O personagem não pode sair da tela.
+    if (proximoY >= 0 &&
+        proximoY < mapaDoLabirinto.length &&
+        proximoX >= 0 &&
+        proximoX < mapaDoLabirinto[0].length) {
+      // 2. LÓGICA DE COLISÃO: Verificamos se a próxima posição NÃO é uma parede (1).
+      if (mapaDoLabirinto[proximoY][proximoX] != 1) {
+        // O setState é o comando que avisa o Flutter: "Os dados mudaram, redesenhe a tela!"
+        setState(() {
+          posicaoPersonagemX = proximoX;
+          posicaoPersonagemY = proximoY;
+        });
+      } else {
+        // 3. FEEDBACK DO SISTEMA: Se for parede, avisamos o jogador!
+        ScaffoldMessenger.of(context).clearSnackBars(); // Limpa avisos antigos
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Ops! Bateu na parede."),
+            duration: Duration(milliseconds: 500), // Some rápido da tela
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 }

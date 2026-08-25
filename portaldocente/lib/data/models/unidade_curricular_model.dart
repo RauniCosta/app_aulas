@@ -4,6 +4,7 @@ class UnidadeCurricularModel {
   final String id;
   final String cursoId; // Faz a ligação com o CursoModel
   final String nome; // Ex: Lógica de Programação, Edição de Vídeo com IA
+  final String sigla;
   final int cargaHoraria; // Ex: 60
   final String moduloOuSemestre; // Ex: 1 (Primeiro módulo)
 
@@ -11,6 +12,7 @@ class UnidadeCurricularModel {
     required this.id,
     required this.cursoId,
     required this.nome,
+    this.sigla = '',
     required this.cargaHoraria,
     required this.moduloOuSemestre,
   });
@@ -20,6 +22,7 @@ class UnidadeCurricularModel {
       id: documentId,
       cursoId: map['cursoId'] ?? '',
       nome: map['nome'] ?? '',
+      sigla: map['sigla'] ?? '', // NOVO CAMPO
       cargaHoraria: map['cargaHoraria']?.toInt() ?? 0,
       moduloOuSemestre: map['moduloOuSemestre']?.toString() ?? 'Modulo 1', // Converte com segurança
     );
@@ -29,6 +32,7 @@ class UnidadeCurricularModel {
     return {
       'cursoId': cursoId,
       'nome': nome,
+      'sigla': sigla,
       'cargaHoraria': cargaHoraria,
       'moduloOuSemestre': moduloOuSemestre,
     };

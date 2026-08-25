@@ -1,14 +1,14 @@
+// Ficheiro: lib/features/admin_web/manage_courses/screens/csv_import_dialog.dart
+
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-//import 'package:file_picker/file_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:csv/csv.dart';
-
 import '../../../../data/models/unidade_curricular_model.dart';
 
 class CsvImportDialog extends StatefulWidget {
   final String cursoId;
-
   const CsvImportDialog({Key? key, required this.cursoId}) : super(key: key);
 
   @override
@@ -21,15 +21,6 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
   List<UnidadeCurricularModel> _ucsExtraidas = [];
 
   Future<void> _selecionarEProcessarCsv() async {
-
-    // Código original desativado temporariamente para compilação.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Módulo de importação desativado temporariamente para testes de compilação.'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-    /*
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['csv'],
@@ -45,10 +36,10 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
 
       try {
         final Uint8List bytes = result.files.single.bytes!;
-        // Decodifica os bytes (tenta UTF-8 para manter os acentos corretos)
+        // Decodifica usando UTF-8 para garantir que os acentos (ç, ã, é) fiquem perfeitos
         final String csvString = utf8.decode(bytes, allowMalformed: true);
 
-        // Converte o texto CSV para uma lista do Dart (considerando ponto e vírgula como separador do Excel)
+        // Converte o CSV para uma lista Dart (ponto e vírgula é o padrão do Excel no Brasil)
         List<List<dynamic>> linhas = const CsvToListConverter(
           fieldDelimiter: ';',
           textDelimiter: '"',
@@ -57,15 +48,14 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
 
         final List<UnidadeCurricularModel> ucsEncontradas = [];
 
-        // Começa do índice 1 para pular o Cabeçalho da planilha
+        // Começa do índice 1 para pular a primeira linha (Cabeçalho da planilha)
         for (int i = 1; i < linhas.length; i++) {
           final linha = linhas[i];
-          
           if (linha.isEmpty || linha[0].toString().trim().isEmpty) continue;
 
           String nomeUC = linha[0].toString().trim();
           int horas = linha.length > 1 ? (int.tryParse(linha[1].toString()) ?? 60) : 60;
-          String modulo = linha.length > 2 ? linha[2].toString().trim() : 'Modulo 1';
+          String modulo = linha.length > 2 ? linha[2].toString().trim() : 'Módulo 1';
 
           ucsEncontradas.add(UnidadeCurricularModel(
             id: "",
@@ -85,35 +75,42 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
         setState(() => _processando = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erro ao ler CSV: O arquivo deve estar separado por ponto e vírgula (;).'), backgroundColor: Colors.red),
+            const SnackBar(
+              content: Text('Erro ao ler CSV: Salve sua planilha como "CSV (separado por vírgulas)" no Excel.'), 
+              backgroundColor: Colors.red
+            ),
           );
         }
       }
     }
-    */
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return AlertDialog(
-      title: const Text('Importar UCs via Planilha (CSV)'),
+      title: const Text('Importar UCs em Massa (CSV)'),
       content: SizedBox(
         width: 500,
         height: 400,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'A planilha deve ter 3 colunas (separadas por ponto e vírgula):\n1. Nome da UC\n2. Carga Horária (apenas número)\n3. Módulo (Ex: Modulo 1)',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
+              child: const Text(
+                'Sua planilha Excel deve ter 3 colunas:\n1. Nome da Disciplina\n2. Carga Horária (Apenas números)\n3. Módulo/Semestre',
+                style: TextStyle(color: Colors.black87, fontSize: 13),
+              ),
             ),
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton.icon(
                 onPressed: _processando ? null : _selecionarEProcessarCsv,
                 icon: const Icon(Icons.upload_file),
-                label: Text(_processando ? 'Processando...' : 'Selecionar Arquivo .CSV'),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E5BB2)),
+                label: Text(_processando ? 'Processando...' : 'Selecionar Planilha .CSV'),
               ),
             ),
             if (_nomeArquivo.isNotEmpty) ...[
@@ -122,7 +119,7 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
               const Divider(),
               Expanded(
                 child: _ucsExtraidas.isEmpty && !_processando
-                    ? const Center(child: Text('Nenhuma disciplina encontrada.'))
+                    ? const Center(child: Text('Nenhuma disciplina encontrada na planilha.'))
                     : ListView.builder(
                         itemCount: _ucsExtraidas.length,
                         itemBuilder: (context, index) {
@@ -130,7 +127,7 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
                           return ListTile(
                             dense: true,
                             leading: const Icon(Icons.check_circle, color: Colors.green),
-                            title: Text(uc.nome),
+                            title: Text(uc.nome, style: const TextStyle(fontWeight: FontWeight.w600)),
                             subtitle: Text('${uc.cargaHoraria}h | ${uc.moduloOuSemestre}'),
                           );
                         },
@@ -149,7 +146,7 @@ class _CsvImportDialogState extends State<CsvImportDialog> {
           onPressed: _ucsExtraidas.isEmpty
               ? null
               : () => Navigator.pop(context, _ucsExtraidas),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor),
           child: Text('Importar ${_ucsExtraidas.length} UCs'),
         ),
       ],
